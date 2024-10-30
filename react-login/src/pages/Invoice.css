@@ -1,0 +1,54 @@
+.invoice-container {
+    width: 80%;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  .invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .company-info {
+    text-align: right;
+  }
+  
+  .invoice-details {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  .invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .invoice-table th, .invoice-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .invoice-summary {
+    text-align: right;
+    margin-bottom: 20px;
+  }
+  
+  .invoice-footer {
+    text-align: center;
+    margin-top: 20px;
+  }
+  
+  .signature {
+    margin: 10px auto;
+    width: 200px;
+    border-top: 1px solid #000;
+  }
+

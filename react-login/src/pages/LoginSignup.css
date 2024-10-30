@@ -1,0 +1,38 @@
+/* src/pages/LoginSignup.css */
+.login-page{
+    background: #f0f2f5;
+  }
+  
+  .login-signup-container {
+    max-width: 400px;
+    margin: auto;
+    padding: 40px;
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  .logo-container {
+    margin-bottom: 20px;
+  }
+  
+  .logo {
+    max-width: 150px;
+  }
+  
+  h2 {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 20px;
+  }
+  
+  .login-form-button,
+  .signup-form-button {
+    width: 100%;
+    border-radius: 5px;
+  }
+  
+  .ant-tabs-nav {
+    margin-bottom: 20px;
+  }
+  

@@ -1,0 +1,34 @@
+/* Default layout for larger screens */
+.table-wrapper {
+    display: block;
+  }
+
+  
+  /* Adjust layout below 900px */
+  @media (max-width: 900px) {
+   
+    .outer-padding{
+        padding: 15px !important;
+    }
+  }
+  
+  @media (max-width:700px) {
+    .head-tab{
+        flex-direction: column;
+        justify-content: end !important;
+        align-items: start;
+        margin-bottom: 10px;
+    }
+    .filter{
+        justify-content: end;
+        width: 100%;
+    }
+
+    .tabs .ant-tabs-tab:first-child{
+        margin: 0 !important;
+    }
+
+    .tabs .ant-tabs-tab{
+       margin: 0 0 0 15px !important;
+    }
+  }

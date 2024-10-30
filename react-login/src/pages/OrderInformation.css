@@ -1,0 +1,234 @@
+.order-info-container {
+    padding: 20px;
+    background-color: #f0f8ff;
+  }
+  
+  .order-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  
+  .order-card {
+    background: #ffffff;
+    border: 1px solid #d9d9d9;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .order-info-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .customer-info p,
+  .order-details p,
+  .cake-details p,
+  .payment-info p {
+    margin: 0;
+    color: #595959;
+    font-size: 14px;
+  }
+  
+  .customer-info {
+    font-weight: bold;
+  }
+  
+  .cake-details,
+  .payment-info {
+    margin-top: 10px;
+  }
+  
+  .payment-info p strong {
+    color: #ff4d4f;
+  }
+  
+  /* .info-block {
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 14px;
+  } */
+  
+  img {
+    display: block;
+    margin: auto;
+  }
+  
+  .ant-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+  }
+
+  .border{
+    border: 1px solid #D9D9D9;
+    width: 1px;
+    height: 100%;
+  }
+
+  .bd-btm{
+    border: 1px solid #D9D9D9;
+    width: 100%;
+    height: 1px;
+  }
+
+
+  /* Desktop View */
+.order-card {
+  padding: 16px;
+}
+
+.customer-info,
+.payment-info,
+.order-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.price-detail-mob{
+  display: none !important;
+}
+
+.live-detail .ant-row.css-dev-only-do-not-override-vryruh {
+  display: flex;
+  white-space: nowrap;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+    margin-left: -10px !important;
+}
+
+.live-detail .wordings{
+  white-space: wrap;
+}
+
+.live-detail .ant-col.ant-col-6.css-dev-only-do-not-override-vryruh{
+  max-width: 100% !important;
+}
+
+
+.response-container {
+  margin: 20px;
+}
+
+.ant-collapse-header {
+  font-size: 16px;
+  padding-left: 0;
+  border-bottom: 1px solid #1890ff;
+}
+
+.ant-collapse-borderless > .ant-collapse-item {
+  border-bottom: none;
+}
+
+.ant-dropdown-trigger.dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 19%;
+  border-bottom: 1px solid #1890ff;
+}
+
+/* Mobile View */
+@media (max-width: 768px) {
+  .customer-info,
+  .payment-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .order-details {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .info-box {
+    width: 100%;
+    text-align: center;
+  }
+
+  .invoice-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .invoice-buttons button {
+    width: 100%;
+  }
+}
+
+
+
+@media (max-width:740px) {
+  .head-tab{
+      flex-direction: column;
+      justify-content: end !important;
+      align-items: start;
+      margin-bottom: 10px;
+  }
+  .filter{
+      justify-content: end;
+      width: 100%;
+  }
+
+  .tabs .ant-tabs-tab:first-child{
+      margin: 0 !important;
+  }
+
+  .tabs .ant-tabs-tab{
+     margin: 0 0 0 15px !important;
+  }
+  .order-avatar{
+    display: grid !important;
+    margin-bottom: -10px !important;
+
+  }
+  .avatar{
+    display: flex;
+  }
+  content .ant-row.price-detail.css-dev-only-do-not-override-vryruh{
+    display: none !important;
+  }
+  .live-order-filter{
+    display: none !important;
+  }
+
+  .live-detail .ant-col.ant-col-6.css-dev-only-do-not-override-vryruh{
+    max-width: 100% !important;
+  }
+
+  .live-detail .ant-row.css-dev-only-do-not-override-vryruh {
+    display: flex;
+    white-space: nowrap;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+    margin-left: -10px !important;
+  }
+
+  .price-detail-mob{
+    display: flex !important;
+  }
+  .ant-card-body{
+    padding: 15px !important;
+  }
+  .full-tab{
+    padding: 15px !important;
+  }
+  .ant-dropdown-trigger.dropdown-header {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+}
+
+

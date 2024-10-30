@@ -1,0 +1,5 @@
+@media(max-width:740px) {
+    content .ant-row.price-detail.css-dev-only-do-not-override-vryruh{
+        display: none !important;
+    }
+}
