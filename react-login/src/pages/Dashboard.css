@@ -39,27 +39,31 @@
   div::-webkit-scrollbar-thumb:hover {
     background: #555;
   }
-  
-  .content{
-    margin: 16px;
+
+  aside.ant-layout-sider{
+    position: sticky;
+    top: 0;
+    left: 0;
+    height: 100vh;
   }
 
   @media (max-width: 900px) {
-    .content{
-      margin: 0;
+    main.ant-layout-content{
+      margin: 0 !important;
     }
-    .content .ant-row.css-dev-only-do-not-override-vryruh{
-      display: grid !important;
+    .content1 .ant-row{
+      display: flex !important;
 
     }
-    .content .ant-col.ant-col-8.css-dev-only-do-not-override-vryruh{
+    .content1 .ant-col{
       width: 100%;
-      max-width: 100%;
+      max-width: fit-content;
+      flex: 50;
     }
   }
 
 @media (max-width: 768px) {
-  aside.ant-layout-sider.ant-layout-sider-dark.ant-layout-sider-collapsed.ant-layout-sider-has-trigger.css-dev-only-do-not-override-vryruh {
+  aside.ant-layout-sider{
     flex: 0 0 60px !important;
     max-width: 60px !important;
     min-width: 60px !important;
@@ -73,7 +77,7 @@
     display: none !important;
   }
   .logo-img{
-    width: 120% !important;
+    width: 126% !important;
     transition: width 0.3s;
     padding: 10px 0 !important;
   }

@@ -148,10 +148,10 @@ const Dashboard = () => {
           </div>
         </Header>
 
-        <Content className="content">
+        <Content style={{margin: '16px'}}>
         
           {location.pathname === "/dashboard" ? (
-            <Row gutter={[16, 16]} >
+            <Row className="content1" gutter={[16, 16]} >
               <Col span={8}>
                 <Card title="Search Branch">
                   <Search placeholder="Search Branch" onSearch={handleSearch} enterButton />
@@ -176,16 +176,7 @@ const Dashboard = () => {
                 </Card>
               </Col>
 
-              <Col span={8}>
-                <Card title="Sales Chart">
-                  <BarChart width={300} height={150} data={stores}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="branch" />
-                    <YAxis />
-                    <Bar dataKey="value" fill="#82ca9d" />
-                  </BarChart>
-                </Card>
-              </Col>
+              
             </Row>
           ) : (
             <Outlet />

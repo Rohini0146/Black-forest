@@ -86,11 +86,12 @@ app.get("/orders", async (req, res) => {
   const limit = parseInt(req.query.limit) || undefined;
   const startDate = req.query.startDate;
   const endDate = req.query.endDate;
+  const dateField = req.query.dateField || "created_at"; // Default to "created_at" if dateField is not specified
 
   let filterQuery = {};
 
   if (startDate && endDate) {
-    filterQuery.created_at = {
+    filterQuery[dateField] = {
       $gte: new Date(startDate),
       $lte: new Date(endDate),
     };
@@ -98,7 +99,7 @@ app.get("/orders", async (req, res) => {
 
   try {
     const orders = await OrderModel.find(filterQuery)
-      .sort({ created_at: -1 })
+      .sort({ [dateField]: -1 }) // Sort by the selected date field
       .limit(limit);
 
     const totalOrders = await OrderModel.countDocuments(filterQuery);
@@ -109,6 +110,7 @@ app.get("/orders", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
+
 
 
 

@@ -1,5 +1,9 @@
 @media(max-width:740px) {
-    content .ant-row.price-detail.css-dev-only-do-not-override-vryruh{
+    .price-detail{
         display: none !important;
     }
+    .ant-layout-content .hist-od{
+        padding: 16px !important;
+    }
+    
 }

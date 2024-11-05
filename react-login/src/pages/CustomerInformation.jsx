@@ -13,20 +13,35 @@ const CustomerInformation = () => {
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [branches, setBranches] = useState({});
   const [activeTab, setActiveTab] = useState("recent");
   const [filterType, setFilterType] = useState("orderDate");
-  const [isDateFilterActive, setIsDateFilterActive] = useState(false); // Track if date filter is active
+  const [isDateFilterActive, setIsDateFilterActive] = useState(false);
+  const [dateRange, setDateRange] = useState(null);
 
-  const limit = 3000; // Load 3000 records initially
+  const limit = 3000;
 
-  // Fetch all customers/orders from backend
+  const fetchBranches = async () => {
+    try {
+      const response = await axios.get("http://43.205.54.210:3001/stores");
+      const branchesData = response.data;
+      const branchesMap = {};
+      branchesData.forEach((branch) => {
+        branchesMap[branch._id] = branch.branch;
+      });
+      setBranches(branchesMap);
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+      message.error("Failed to fetch branches. Please try again later.");
+    }
+  };
+
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(
         `http://43.205.54.210:3001/orders?limit=${limit}`
       );
-
       const { orders } = response.data;
       setCustomers(orders);
       setFilteredCustomers(orders);
@@ -39,21 +54,20 @@ const CustomerInformation = () => {
   }, [limit]);
 
   useEffect(() => {
-    fetchOrders(); // Fetch data when the component mounts
+    fetchBranches();
+    fetchOrders();
   }, [fetchOrders]);
 
-  // Filter customers based on selected tab (Recent, Last Week, Last Month)
   const filterCustomersByTab = (key) => {
     const now = new Date();
     let filtered = [];
 
-    // Sort customers by created date
     const sortedCustomers = [...customers].sort(
       (a, b) => new Date(b.created_at) - new Date(a.created_at)
     );
 
     if (key === "recent") {
-      filtered = sortedCustomers.slice(0, 20); // Show latest 20 customers
+      filtered = sortedCustomers.slice(0, 20);
     } else if (key === "lastWeek") {
       const lastWeek = new Date(now.setDate(now.getDate() - 7));
       filtered = sortedCustomers.filter(
@@ -66,38 +80,53 @@ const CustomerInformation = () => {
       );
     }
 
-    setFilteredCustomers(filtered); // Update filtered customers
+    setFilteredCustomers(filtered);
   };
 
-  // Handle tab change and call filter function
   const handleTabChange = (key) => {
     setActiveTab(key);
-    setIsDateFilterActive(false); // Disable date range filtering when switching tabs
+    setIsDateFilterActive(false);
     filterCustomersByTab(key);
   };
 
-  // Filter customers based on date range selection
-  const handleRangeChange = async (dates) => {
+  const handleRangeChange = (dates) => {
+    setDateRange(dates); // Update date range state
     if (dates) {
       const [start, end] = dates;
-      setIsDateFilterActive(true); // Set date filter as active
-      await fetchFilteredOrders(start.format("YYYY-MM-DD"), end.format("YYYY-MM-DD"));
+      // Extend the end date by adding one day
+      const adjustedEndDate = end.add(1, "day").startOf("day");
+      
+      fetchFilteredOrders(
+        start.startOf("day").format("YYYY-MM-DD"),
+        adjustedEndDate.format("YYYY-MM-DD"),
+        filterType
+      );
+      setIsDateFilterActive(true);
     } else {
-      setIsDateFilterActive(false); // Reset date filter
-      fetchOrders(); // Reload all orders if no date range is selected
+      fetchOrders();
+      setIsDateFilterActive(false);
     }
   };
+  
 
-  // Fetch customers/orders within the specified date range
-  const fetchFilteredOrders = async (startDate, endDate) => {
+  const fetchFilteredOrders = async (startDate, endDate, filterType) => {
     setLoading(true);
     try {
+      const dateField = filterType === "birthdayDate" ? "birthday_date" : "created_at";
+      
+      // Fetch orders with date filtering based on the selected date field (created_at or birthday_date)
       const response = await axios.get(
-        `http://43.205.54.210:3001/orders?startDate=${startDate}&endDate=${endDate}`
+        `http://43.205.54.210:3001/orders?startDate=${startDate}&endDate=${endDate}&dateField=${dateField}`
       );
-
       const { orders } = response.data;
-      setFilteredCustomers(orders); // Show only filtered data based on date range
+  
+      // Filter data based on the selected date type
+      const filteredData = orders.filter((order) => {
+        const dateValue = filterType === "birthdayDate" ? order.birthday_date : order.created_at;
+        return dateValue && moment(dateValue).isBetween(startDate, endDate, null, "[]");
+      });
+  
+      setFilteredCustomers(filteredData);
     } catch (error) {
       console.error("Error fetching filtered customers:", error);
       message.error("Failed to fetch customers. Please try again later.");
@@ -105,9 +134,23 @@ const CustomerInformation = () => {
       setLoading(false);
     }
   };
+  
+  
+  const handleFilterTypeChange = (value) => {
+    setFilterType(value);
+    setDateRange(null); // Clear the date range in the RangePicker
+    fetchOrders(); // Reload all orders when switching filter type
+    setCurrentPage(1); // Reset pagination
+  };
+  
 
   const columns = [
-    { title: "No", dataIndex: "no", key: "no", render: (text, record, index) => index + 1 },
+    {
+      title: "No",
+      dataIndex: "no",
+      key: "no",
+      render: (text, record, index) => index + 1,
+    },
     { title: "Order ID", dataIndex: "form_no", key: "form_no" },
     { title: "Name", dataIndex: "customer_name", key: "customer_name" },
     { title: "Phone", dataIndex: "customer_phone", key: "customer_phone" },
@@ -117,7 +160,7 @@ const CustomerInformation = () => {
       title: "Birthday Date",
       dataIndex: "birthday_date",
       key: "birthday_date",
-      render: (date) => date ? moment(date).format("DD/MM/YYYY") : "N/A", // Show "N/A" if date is missing
+      render: (date) => (date ? moment(date).format("DD/MM/YYYY") : "N/A"),
     },
     {
       title: "Order Date",
@@ -125,36 +168,49 @@ const CustomerInformation = () => {
       key: "created_at",
       render: (date) => moment(date).format("DD/MM/YYYY"),
     },
-    { title: "Branch Name", dataIndex: "branch", key: "branch" },
+    {
+      title: "Branch Name",
+      dataIndex: "branch",
+      key: "branch",
+      render: (branchId) => branches[branchId] || "Unknown Branch",
+    },
   ];
 
   useEffect(() => {
     if (!isDateFilterActive && customers.length > 0) {
-      filterCustomersByTab(activeTab); // Apply initial filter on component mount or tab change
+      filterCustomersByTab(activeTab);
     }
   }, [customers, activeTab, isDateFilterActive]);
 
   return (
-    <div className="outer-padding" style={{ backgroundColor: "#fff", padding: "24px" }}>
-      <div className="head-tab" style={{ display: "flex", justifyContent: "space-between", alignItems: 'baseline' }}>
-        <Tabs activeKey={activeTab} onChange={handleTabChange}>
+    <div
+      className="outer-padding"
+      style={{ backgroundColor: "#fff", padding: "24px" }}
+    >
+      <div
+        className="head-tab"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+        }}
+      >
+        <Tabs activeKey={activeTab} onChange={handleTabChange} className="tabs">
           <TabPane tab="Recent" key="recent" />
           <TabPane tab="Last Week" key="lastWeek" />
           <TabPane tab="Last Month" key="lastMonth" />
         </Tabs>
 
         <div style={{ display: "flex", alignItems: "center" }}>
-          <Select
-            icon={<FilterOutlined />}
-            defaultValue="orderDate"
-            onChange={setFilterType}
-            style={{ width: 150, marginRight: 10 }}
-          >
-            <Option value="orderDate">Order Date</Option>
-            <Option value="birthdayDate">Birthday Date</Option>
-          </Select>
-
-          <RangePicker onChange={handleRangeChange} />
+        <Select
+        defaultValue="orderDate"
+        onChange={handleFilterTypeChange}
+        style={{ width: 150, marginRight: 10 }}
+      >
+        <Option value="orderDate">Order Date</Option>
+        <Option value="birthdayDate">birthday Date</Option>
+      </Select>
+      <RangePicker value={dateRange} onChange={handleRangeChange} />
         </div>
       </div>
 
@@ -165,10 +221,14 @@ const CustomerInformation = () => {
           pagination={{
             pageSize: undefined,
             showTotal: (total) => `Total ${total} items`,
-            style: { marginTop: "20px", padding: "15px", backgroundColor: "#e6f7ff" },
+            style: {
+              marginTop: "20px",
+              padding: "15px",
+              backgroundColor: "#e6f7ff",
+            },
           }}
           rowKey={(record) => record._id}
-          style={{ padding: '0px', overflowX: "auto" }}
+          style={{ padding: "0px", overflowX: "auto" }}
           scroll={{ x: "max-content" }}
         />
       </Spin>
