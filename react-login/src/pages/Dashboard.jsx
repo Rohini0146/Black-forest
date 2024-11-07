@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Menu, Avatar, Dropdown, Row, Col, Card, Typography, List, Input } from "antd";
+import {
+  Layout,
+  Menu,
+  Avatar,
+  Dropdown,
+  Row,
+  Col,
+  Card,
+  Input,
+  List,
+} from "antd";
 import {
   UserOutlined,
   FileOutlined,
@@ -15,10 +25,9 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./Dashboard.css";
 import logo from "../images/Logo-bk.png";
-import { BarChart, Bar, PieChart, Pie, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
+import { PieChart, Pie, Cell } from "recharts";
 
 const { Header, Sider, Content } = Layout;
-const { Title } = Typography;
 const { Search } = Input;
 
 const Dashboard = () => {
@@ -26,9 +35,58 @@ const Dashboard = () => {
   const [stores, setStores] = useState([]);
   const [filteredStores, setFilteredStores] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [employeeName, setEmployeeName] = useState(""); // State to store employee name
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Redirect to login if no EmployeeID is found in localStorage
+  useEffect(() => {
+    if (!localStorage.getItem("EmployeeID")) {
+      navigate("/login");
+    } else {
+      fetchEmployeeData();
+    }
+  }, []);
+
+  // Function to log out user
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("EmployeeID");
+    sessionStorage.removeItem("sessionActive"); // Clear session flag
+    navigate("/login");
+  };
+
+  // Function to fetch employee data based on EmployeeID stored in localStorage
+  const fetchEmployeeData = async () => {
+    const employeeId = localStorage.getItem("EmployeeID");
+    console.log("EmployeeID from localStorage:", employeeId);
+
+    if (employeeId) {
+      try {
+        const response = await axios.get(
+          `http://43.205.54.210:3001/employees/${employeeId}`
+        );
+
+        if (
+          response.data &&
+          response.data.FirstName &&
+          response.data.LastName
+        ) {
+          setEmployeeName(
+            `${response.data.FirstName} ${response.data.LastName}`
+          );
+        } else {
+          console.error("Employee data not found or structure is incorrect");
+        }
+      } catch (error) {
+        console.error("Error fetching employee data:", error);
+      }
+    } else {
+      console.warn("No EmployeeID found in localStorage");
+    }
+  };
+  
 
   const getMenuKeyFromPath = () => {
     const path = location.pathname;
@@ -58,7 +116,6 @@ const Dashboard = () => {
     navigate(routes[key]);
   };
 
-  // Fetch function for stores
   const fetchStores = async () => {
     setLoading(true);
     try {
@@ -83,38 +140,71 @@ const Dashboard = () => {
     setFilteredStores(filtered);
   };
 
-
   useEffect(() => {
     const handleResize = () => {
       setCollapsed(window.innerWidth <= 1023);
     };
 
-    window.addEventListener("resize", handleResize); // Add resize event listener
-    return () => window.removeEventListener("resize", handleResize); // Clean up event listener
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const userMenu = (
+    <Menu>
+      <Menu.Item key="profile">Profile</Menu.Item>
+      <Menu.Item key="settings">Settings</Menu.Item>
+      <Menu.Divider />
+      <Menu.Item key="logout" onClick={handleLogout}>
+        Logout
+      </Menu.Item>
+    </Menu>
+  );
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider width={220} collapsible
+      <Sider
+        width={220}
+        collapsible
         collapsed={collapsed}
-        onCollapse={setCollapsed}  style={{ backgroundColor: "#fff" }} >
-        <div style={{ backgroundColor: "#002140", padding: "10px", textAlign: "center" }}>
-          <img className="logo-img" src={logo} alt="Logo" style={{ 
-        width: collapsed ? "118%" : "47.5%", // Change width based on collapsed state 
-        transition: "width 0.3s ease",
-        padding: collapsed ? "10px" : "0" // Smooth transition effect
-      }}/>
+        onCollapse={setCollapsed}
+        style={{ backgroundColor: "#fff" }}
+      >
+        <div
+          style={{
+            backgroundColor: "#002140",
+            padding: "10px",
+            textAlign: "center",
+          }}
+        >
+          <img
+            className="logo-img"
+            src={logo}
+            alt="Logo"
+            style={{
+              width: collapsed ? "118%" : "47.5%",
+              transition: "width 0.3s ease",
+              padding: collapsed ? "10px" : "0",
+            }}
+          />
         </div>
         <Menu
           mode="inline"
           selectedKeys={[getMenuKeyFromPath()]}
           onClick={handleMenuClick}
-          style={{backgroundColor: "fff"}}
+          style={{ backgroundColor: "#fff" }}
         >
-          <Menu.Item key="1" icon={<UserOutlined />}>Dashboard</Menu.Item>
-          <Menu.Item key="2" icon={<FileOutlined />}>Customer Information</Menu.Item>
-          <Menu.Item key="3" icon={<OrderedListOutlined />}>Live Order</Menu.Item>
-          <Menu.Item key="4" icon={<HistoryOutlined />}>Order History</Menu.Item>
+          <Menu.Item key="1" icon={<UserOutlined />}>
+            Dashboard
+          </Menu.Item>
+          <Menu.Item key="2" icon={<FileOutlined />}>
+            Customer Information
+          </Menu.Item>
+          <Menu.Item key="3" icon={<OrderedListOutlined />}>
+            Live Order
+          </Menu.Item>
+          <Menu.Item key="4" icon={<HistoryOutlined />}>
+            Order History
+          </Menu.Item>
           <Menu.Item key="5" icon={<ShoppingOutlined />}>
             Product Information
           </Menu.Item>
@@ -133,29 +223,36 @@ const Dashboard = () => {
         </Menu>
       </Sider>
 
-      <Layout >
-         <Header className="site-layout-background" style={{ padding: 0 }}>
+      <Layout>
+        <Header className="site-layout-background" style={{ padding: 0 }}>
           <div className="header-content">
-            <Dropdown overlay={<Menu>
-              <Menu.Item key="profile">Profile</Menu.Item>
-              <Menu.Item key="settings">Settings</Menu.Item>
-              <Menu.Divider />
-              <Menu.Item key="logout">Logout</Menu.Item>
-            </Menu>} trigger={["click"]}>
-              <Avatar icon={<UserOutlined />} style={{ cursor: "pointer", marginRight: 16 }} />
+            <Dropdown overlay={userMenu} trigger={["click"]}>
+              <Avatar
+                icon={<UserOutlined />}
+                style={{ cursor: "pointer", marginRight: 16 }}
+              />
             </Dropdown>
-            <span style={{ color: "#fff" }}>Gerald Moe</span>
+            <span style={{ color: "#fff" }}>{employeeName || "Employee"}</span>
           </div>
         </Header>
 
-        <Content style={{margin: '16px'}}>
-        
+        <Content style={{ margin: "16px" }}>
           {location.pathname === "/dashboard" ? (
-            <Row className="content1" gutter={[16, 16]} >
+            <Row className="content1" gutter={[16, 16]}>
               <Col span={8}>
                 <Card title="Search Branch">
-                  <Search placeholder="Search Branch" onSearch={handleSearch} enterButton />
-                  <div style={{ maxHeight: "200px", overflowY: "auto", marginTop: "10px" }}>
+                  <Search
+                    placeholder="Search Branch"
+                    onSearch={handleSearch}
+                    enterButton
+                  />
+                  <div
+                    style={{
+                      maxHeight: "200px",
+                      overflowY: "auto",
+                      marginTop: "10px",
+                    }}
+                  >
                     <List
                       dataSource={filteredStores}
                       renderItem={(store) => (
@@ -169,14 +266,16 @@ const Dashboard = () => {
               <Col span={8}>
                 <Card title="Order Summary">
                   <PieChart width={200} height={200}>
-                    <Pie data={[{ name: "Orders", value: 100 }]} dataKey="value" outerRadius={80}>
+                    <Pie
+                      data={[{ name: "Orders", value: 100 }]}
+                      dataKey="value"
+                      outerRadius={80}
+                    >
                       <Cell fill="#8884d8" />
                     </Pie>
                   </PieChart>
                 </Card>
               </Col>
-
-              
             </Row>
           ) : (
             <Outlet />

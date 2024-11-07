@@ -1,5 +1,3 @@
-// src/pages/LoginSignup.js
-
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Form, Input, Button, Tabs, Checkbox, Row, Col } from "antd";
@@ -23,10 +21,15 @@ const Login = () => {
         EmployeeID: values["Employee ID"], // Pass Employee ID
         verificationCode: values.verificationCode, // Pass verification code
       });
-  
+
       if (response.status === 200 && response.data === "Login Successful") {
         alert("Login Successful!");
-        navigate("/dashboard"); // Redirect to the dashboard page
+
+        // Store the EmployeeID in localStorage
+        localStorage.setItem("EmployeeID", values["Employee ID"]);
+
+        // Redirect to the dashboard page
+        navigate("/dashboard");
       } else {
         alert(response.data || "Login failed. Please try again.");
       }
@@ -37,7 +40,6 @@ const Login = () => {
       );
     }
   };
-  
 
   return (
     <div className="login-page">
@@ -63,7 +65,7 @@ const Login = () => {
             </TabPane>
           </Tabs>
         </div>
-        <Tabs style={{marginTop:'-20px'}}>
+        <Tabs style={{ marginTop: "-20px" }}>
           {/* Login Form */}
           <TabPane key="login">
             <Form
@@ -137,7 +139,6 @@ const Login = () => {
         </Tabs>
         <footer style={{ marginTop: "20px", fontSize: "12px", color: "#888" }}>
           <p>Black Forest Cake</p>
-         
         </footer>
       </div>
     </div>

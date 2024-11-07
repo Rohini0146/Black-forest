@@ -172,15 +172,24 @@ app.put("/orders/:id/response", async (req, res) => {
   }
 });
 
-app.get("/employees", async (req, res) => {
+
+// Route to fetch a single employee by EmployeeID
+app.get("/employees/:employeeId", async (req, res) => {
   try {
-    const employees = await EmployeeModel.find().sort({ createdAt: -1 });
-    res.json(employees);
+    const employeeId = req.params.employeeId; // Get EmployeeID from URL params
+    const employee = await EmployeeModel.findOne({ EmployeeID: employeeId });
+
+    if (!employee) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    res.json(employee);
   } catch (error) {
-    console.error("Error fetching employees:", error);
-    res.status(500).json({ error: "Failed to fetch employees" });
+    console.error("Error fetching employee:", error);
+    res.status(500).json({ error: "Failed to fetch employee" });
   }
 });
+
 
 
 // Start the server

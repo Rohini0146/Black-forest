@@ -18,6 +18,7 @@ const CustomerInformation = () => {
   const [filterType, setFilterType] = useState("orderDate");
   const [isDateFilterActive, setIsDateFilterActive] = useState(false);
   const [dateRange, setDateRange] = useState(null);
+  const [selectedResponse, setSelectedResponse] = useState("Show All");
 
   const limit = 3000;
 
@@ -90,16 +91,15 @@ const CustomerInformation = () => {
   };
 
   const handleRangeChange = (dates) => {
-    setDateRange(dates); // Update date range state
+    setDateRange(dates);
     if (dates) {
       const [start, end] = dates;
-      // Extend the end date by adding one day
       const adjustedEndDate = end.add(1, "day").startOf("day");
-      
       fetchFilteredOrders(
         start.startOf("day").format("YYYY-MM-DD"),
         adjustedEndDate.format("YYYY-MM-DD"),
-        filterType
+        filterType,
+        selectedResponse
       );
       setIsDateFilterActive(true);
     } else {
@@ -107,25 +107,56 @@ const CustomerInformation = () => {
       setIsDateFilterActive(false);
     }
   };
-  
 
-  const fetchFilteredOrders = async (startDate, endDate, filterType) => {
+  const handleResponseChange = (value) => {
+    setSelectedResponse(value);
+    if (dateRange && dateRange.length === 2) {
+      // Only apply response filter if a date range is selected
+      const [start, end] = dateRange;
+      const adjustedEndDate = end.add(1, "day").startOf("day");
+      fetchFilteredOrders(
+        start.startOf("day").format("YYYY-MM-DD"),
+        adjustedEndDate.format("YYYY-MM-DD"),
+        filterType,
+        value
+      );
+    } else {
+      message.info("Please select a date range first.");
+      setFilteredCustomers(customers); // Reset to original data if no date range is selected
+    }
+  };
+
+  const fetchFilteredOrders = async (
+    startDate,
+    endDate,
+    filterType,
+    responseType = "Show All"
+  ) => {
     setLoading(true);
     try {
-      const dateField = filterType === "birthdayDate" ? "birthday_date" : "created_at";
-      
-      // Fetch orders with date filtering based on the selected date field (created_at or birthday_date)
-      const response = await axios.get(
-        `http://43.205.54.210:3001/orders?startDate=${startDate}&endDate=${endDate}&dateField=${dateField}`
-      );
+      const dateField =
+        filterType === "birthdayDate" ? "birthday_date" : "created_at";
+      let url = `http://43.205.54.210:3001/orders?startDate=${startDate}&endDate=${endDate}&dateField=${dateField}`;
+
+      if (responseType !== "Show All") {
+        url += `&response=${responseType}`;
+      }
+
+      const response = await axios.get(url);
       const { orders } = response.data;
-  
-      // Filter data based on the selected date type
+
       const filteredData = orders.filter((order) => {
-        const dateValue = filterType === "birthdayDate" ? order.birthday_date : order.created_at;
-        return dateValue && moment(dateValue).isBetween(startDate, endDate, null, "[]");
+        const dateValue =
+          filterType === "birthdayDate"
+            ? order.birthday_date
+            : order.created_at;
+        return (
+          dateValue &&
+          moment(dateValue).isBetween(startDate, endDate, null, "[]") &&
+          (responseType === "Show All" || order.response === responseType)
+        );
       });
-  
+
       setFilteredCustomers(filteredData);
     } catch (error) {
       console.error("Error fetching filtered customers:", error);
@@ -134,15 +165,29 @@ const CustomerInformation = () => {
       setLoading(false);
     }
   };
-  
-  
+
   const handleFilterTypeChange = (value) => {
     setFilterType(value);
     setDateRange(null); // Clear the date range in the RangePicker
     fetchOrders(); // Reload all orders when switching filter type
     setCurrentPage(1); // Reset pagination
   };
-  
+
+  const responseColors = {
+    "No Need": "red",
+    "Not Interest": "#FF6347", // Tomato
+    "Out of Station": "#8A2BE2", // BlueViolet
+    "Not Reachable": "#DC143C", // Crimson
+    "Not Answering": "#DC143C",
+    "Other Shop": "#A52A2A", // Brown
+    "Visit Come to Shop": "#2E8B57", // SeaGreen
+    Waiting: "orange",
+    "Order Taken by Customer": "green",
+    "Customer need not possible": "#FF4500", // OrangeRed
+    "Whatsapp Model": "darkgreen",
+  };
+
+  const responseOptions = ["Show All", ...Object.keys(responseColors)];
 
   const columns = [
     {
@@ -151,9 +196,10 @@ const CustomerInformation = () => {
       key: "no",
       render: (text, record, index) => index + 1,
     },
-    { title: "Order ID", dataIndex: "form_no", key: "form_no" },
+
     { title: "Name", dataIndex: "customer_name", key: "customer_name" },
     { title: "Phone", dataIndex: "customer_phone", key: "customer_phone" },
+    { title: "Response", dataIndex: "response", key: "response" },
     { title: "Cake Model", dataIndex: "cake_model", key: "cake_model" },
     { title: "Price", dataIndex: "amount", key: "amount" },
     {
@@ -174,6 +220,7 @@ const CustomerInformation = () => {
       key: "branch",
       render: (branchId) => branches[branchId] || "Unknown Branch",
     },
+    { title: "Order ID", dataIndex: "form_no", key: "form_no" },
   ];
 
   useEffect(() => {
@@ -201,16 +248,28 @@ const CustomerInformation = () => {
           <TabPane tab="Last Month" key="lastMonth" />
         </Tabs>
 
-        <div style={{ display: "flex", alignItems: "center" }}>
         <Select
-        defaultValue="orderDate"
-        onChange={handleFilterTypeChange}
-        style={{ width: 150, marginRight: 10 }}
-      >
-        <Option value="orderDate">Order Date</Option>
-        <Option value="birthdayDate">birthday Date</Option>
-      </Select>
-      <RangePicker value={dateRange} onChange={handleRangeChange} />
+          style={{ width: 200, marginBottom: 20 }}
+          value={selectedResponse}
+          onChange={handleResponseChange}
+        >
+          {responseOptions.map((response) => (
+            <Option key={response} value={response}>
+              {response}
+            </Option>
+          ))}
+        </Select>
+
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <Select
+            defaultValue="orderDate"
+            onChange={handleFilterTypeChange}
+            style={{ width: 150, marginRight: 10 }}
+          >
+            <Option value="orderDate">Order Date</Option>
+            <Option value="birthdayDate">birthday Date</Option>
+          </Select>
+          <RangePicker value={dateRange} onChange={handleRangeChange} />
         </div>
       </div>
 

@@ -24,6 +24,7 @@ import jsPDF from "jspdf";
 import logo from "../images/Logo-bk.png";
 import "./OrderInformation.css";
 import "./OrderHistory.css";
+import { debounce } from "lodash";
 
 const { Content } = Layout;
 const { TabPane } = Tabs;
@@ -42,6 +43,7 @@ const OrderHistory = () => {
   const [filterType, setFilterType] = useState("orderDate");
   const [isDateFilterActive, setIsDateFilterActive] = useState(false);
   const [dateRange, setDateRange] = useState(null);
+  const [selectedResponse, setSelectedResponse] = useState("Show All");
 
   const limit = 3000; // Initial limit for data fetch
 
@@ -100,17 +102,25 @@ const OrderHistory = () => {
     applyTabFilter(key); // Apply filter based on the new tab
   };
 
-  const fetchFilteredOrders = async (startDate, endDate) => {
+  const fetchFilteredOrders = async (
+    startDate,
+    endDate,
+    filterType,
+    responseType = "Show All"
+  ) => {
     setLoading(true);
     try {
       const dateField =
         filterType === "deliveryDate" ? "delivery_date" : "created_at";
-      const response = await axios.get(
-        `http://43.205.54.210:3001/orders?startDate=${startDate}&endDate=${endDate}&dateField=${dateField}`
-      );
+      let url = `http://43.205.54.210:3001/orders?startDate=${startDate}&endDate=${endDate}&dateField=${dateField}`;
+
+      if (responseType !== "Show All") {
+        url += `&response=${responseType}`;
+      }
+
+      const response = await axios.get(url);
       const { orders } = response.data;
 
-      // Filter data based on the selected date type and date range
       const filteredData = orders.filter((order) => {
         const dateValue =
           filterType === "deliveryDate"
@@ -118,39 +128,45 @@ const OrderHistory = () => {
             : order.created_at;
         return (
           dateValue &&
-          moment(dateValue).isBetween(startDate, endDate, null, "[]")
+          moment(dateValue).isBetween(startDate, endDate, null, "[]") &&
+          (responseType === "Show All" || order.response === responseType)
         );
       });
 
-      setFilteredOrders(filteredData); // Show only filtered data based on date range
+      setFilteredOrders(filteredData);
     } catch (error) {
-      console.error("Error fetching filtered orders:", error);
-      message.error("Failed to fetch filtered orders.");
+      console.error("Error fetching filtered customers:", error);
+      message.error("Failed to fetch customers. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
+
   const handleRangeChange = (dates) => {
-    setDateRange(dates); // Update date range state
-    if (dates && dates.length === 2) {
+    setDateRange(dates);
+    if (dates) {
       const [start, end] = dates;
       const adjustedEndDate = end.add(1, "day").startOf("day");
-
       fetchFilteredOrders(
         start.startOf("day").format("YYYY-MM-DD"),
-        adjustedEndDate.format("YYYY-MM-DD")
+        adjustedEndDate.format("YYYY-MM-DD"),
+        filterType,
+        selectedResponse
       );
+      setIsDateFilterActive(true);
     } else {
-      fetchOrders(); // Reload all orders if date range is cleared
+      fetchOrders();
+      setIsDateFilterActive(false);
     }
   };
-
+  
   useEffect(() => {
-    if (!isDateFilterActive && orders.length > 0) {
-      applyTabFilter(activeTab);
+    if (!isDateFilterActive && activeTab) {
+      applyTabFilter(activeTab); // Apply only on activeTab change
     }
-  }, [orders, activeTab, isDateFilterActive]);
+  }, [activeTab, isDateFilterActive]);
+  
 
   const handleFilterTypeChange = (value) => {
     setFilterType(value);
@@ -176,52 +192,98 @@ const OrderHistory = () => {
 
   const handleMenuClick = async (e, orderId) => {
     const newResponse = e.key;
-
-    // Update the response in the backend
+  
     try {
+      // Update the response in the backend
       await axios.put(`http://43.205.54.210:3001/orders/${orderId}/response`, {
         response: newResponse,
       });
-      message.success(
-        `Response for Order ${orderId} updated to: ${newResponse}`
-      );
-
-      // Update the response in the orders state
+      message.success(`Response for Order ${orderId} updated to: ${newResponse}`);
+  
+      // Update the specific order in both `orders` and `filteredOrders` arrays
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order._id === orderId ? { ...order, response: newResponse } : order
         )
       );
-
-      // Update the response in the filtered orders state as well
+  
       setFilteredOrders((prevFilteredOrders) =>
         prevFilteredOrders.map((order) =>
           order._id === orderId ? { ...order, response: newResponse } : order
         )
       );
+  
+      // Prevent any automatic change in active tab
     } catch (error) {
       console.error("Failed to update response:", error);
       message.error("Failed to update response");
     }
   };
+  
+  
 
-  const menu = (orderId) => (
+  const colorMap = {
+    "No Need": "red",
+    "Not Interest": "#FF6347", // Tomato
+    "Out of Station": "#8A2BE2", // BlueViolet
+    "Not Reachable": "#DC143C", // Crimson
+    "Not Answering": "#DC143C",
+    "Other Shop": "#A52A2A", // Brown
+    "Visit Come to Shop": "#2E8B57", // SeaGreen
+    Waiting: "orange",
+    "Order Taken by Customer": "green",
+    "Customer need not possible": "#FF4500", // OrangeRed
+    "Whatsapp Model": "darkgreen",
+  };
+
+  // Menu component for dropdown
+  const menu = (orderId, handleMenuClick) => (
     <Menu onClick={(e) => handleMenuClick(e, orderId)}>
-      <Menu.Item key="No Need">No Need</Menu.Item>
-      <Menu.Item key="Not Interest">Not Interest</Menu.Item>
-      <Menu.Item key="Out of Station">Out of Station</Menu.Item>
-      <Menu.Item key="Not Reachable">Not Reachable</Menu.Item>
-      <Menu.Item key="Other Shop">Other Shop</Menu.Item>
-      <Menu.Item key="Visit Come to Shop">Visit Come to Shop</Menu.Item>
-      <Menu.Item key="Waiting">Waiting</Menu.Item>
-      <Menu.Item key="Order Taken by Customer">
-        Order Taken by Customer
-      </Menu.Item>
-      <Menu.Item key="Customer need not possible">
-        Customer need not possible
-      </Menu.Item>
+      {Object.keys(colorMap).map((key) => (
+        <Menu.Item key={key} style={{ color: colorMap[key] }}>
+          {key}
+        </Menu.Item>
+      ))}
     </Menu>
   );
+
+  const responseColors = {
+    "No Need": "red",
+    "Not Interest": "#FF6347", // Tomato
+    "Out of Station": "#8A2BE2", // BlueViolet
+    "Not Reachable": "#DC143C", // Crimson
+    "Not Answering": "#DC143C",
+    "Other Shop": "#A52A2A", // Brown
+    "Visit Come to Shop": "#2E8B57", // SeaGreen
+    "Waiting": "orange",
+    "Order Taken by Customer": "green",
+    "Customer need not possible": "#FF4500", // OrangeRed
+    "Whatsapp Model": "darkgreen",
+  };
+
+  const responseOptions = ["Show All", ...Object.keys(responseColors)];
+
+
+  // Adjust the handleFilterChange to prioritize client-side filtering and avoid unnecessary fetches
+  const handleFilterChange = (value) => {
+    setSelectedResponse(value);
+    if (dateRange && dateRange.length === 2) {
+      // Only apply response filter if a date range is selected
+      const [start, end] = dateRange;
+      const adjustedEndDate = end.add(1, "day").startOf("day");
+      fetchFilteredOrders(
+        start.startOf("day").format("YYYY-MM-DD"),
+        adjustedEndDate.format("YYYY-MM-DD"),
+        filterType,
+        value
+      );
+    } else {
+      message.info("Please select a date range first.");
+      setFilteredOrders(orders); // Reset to original data if no date range is selected
+    }
+  };
+  
+  
 
   const handleDownloadPDF = (order) => {
     const doc = new jsPDF();
@@ -314,6 +376,18 @@ const OrderHistory = () => {
             <TabPane tab="Last Week" key="lastWeek" />
             <TabPane tab="Last Month" key="lastMonth" />
           </Tabs>
+
+          <Select
+            style={{ width: 200, marginBottom: 20 }}
+            value={selectedResponse}
+            onChange={handleFilterChange}
+          >
+            {responseOptions.map((response) => (
+              <Option key={response} value={response}>
+                {response}
+              </Option>
+            ))}
+          </Select>
 
           <div style={{ display: "flex", alignItems: "center" }}>
             <Select
@@ -729,7 +803,10 @@ const OrderHistory = () => {
                           flexWrap: "wrap",
                         }}
                       >
-                        <Dropdown overlay={menu(order._id)} trigger={["click"]}>
+                        <Dropdown
+                          overlay={menu(order._id, handleMenuClick)}
+                          trigger={["click"]}
+                        >
                           <div
                             style={{ cursor: "pointer", marginRight: "16px" }}
                           >
@@ -737,23 +814,20 @@ const OrderHistory = () => {
                               Response
                             </span>
                             <DownOutlined
-                              style={{
-                                marginLeft: "8px",
-                                color: "#1890ff",
-                              }}
+                              style={{ marginLeft: "8px", color: "#1890ff" }}
                             />
                           </div>
                         </Dropdown>
 
-                        {/* Display the selected response dynamically */}
+                        {/* Display the selected response with dynamic color */}
                         {order.response && (
                           <span
                             style={{
-                              color: "#000",
+                              color: colorMap[order.response] || "#000", // Default color if not in colorMap
                               fontWeight: "bold",
                             }}
                           >
-                            Selected Response: {order.response}
+                             {order.response}
                           </span>
                         )}
                       </div>
