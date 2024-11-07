@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Tabs, Select, DatePicker, message, Spin } from "antd";
+import { Table, Tabs, Select, DatePicker, message, Spin, Dropdown, Menu } from "antd";
 import axios from "axios";
 import moment from "moment";
 import { FilterOutlined } from "@ant-design/icons";
@@ -90,6 +90,13 @@ const CustomerInformation = () => {
     filterCustomersByTab(key);
   };
 
+  const handleFilterTypeChange = (value) => {
+    setFilterType(value);
+    setDateRange(null); // Clear the date range in the RangePicker
+    fetchOrders(); // Reload all orders when switching filter type
+    setCurrentPage(1); // Reset pagination
+  };
+
   const handleRangeChange = (dates) => {
     setDateRange(dates);
     if (dates) {
@@ -111,7 +118,6 @@ const CustomerInformation = () => {
   const handleResponseChange = (value) => {
     setSelectedResponse(value);
     if (dateRange && dateRange.length === 2) {
-      // Only apply response filter if a date range is selected
       const [start, end] = dateRange;
       const adjustedEndDate = end.add(1, "day").startOf("day");
       fetchFilteredOrders(
@@ -122,7 +128,7 @@ const CustomerInformation = () => {
       );
     } else {
       message.info("Please select a date range first.");
-      setFilteredCustomers(customers); // Reset to original data if no date range is selected
+      setFilteredCustomers(customers);
     }
   };
 
@@ -166,40 +172,89 @@ const CustomerInformation = () => {
     }
   };
 
-  const handleFilterTypeChange = (value) => {
-    setFilterType(value);
-    setDateRange(null); // Clear the date range in the RangePicker
-    fetchOrders(); // Reload all orders when switching filter type
-    setCurrentPage(1); // Reset pagination
+  const handleMenuClick = async (e, orderId) => {
+    const newResponse = e.key;
+    try {
+      await axios.put(`http://43.205.54.210:3001/orders/${orderId}/response`, {
+        response: newResponse,
+      });
+      message.success(`Response for Order ${orderId} updated to: ${newResponse}`);
+
+      setCustomers((prevCustomers) =>
+        prevCustomers.map((customer) =>
+          customer._id === orderId ? { ...customer, response: newResponse } : customer
+        )
+      );
+
+      setFilteredCustomers((prevFilteredCustomers) =>
+        prevFilteredCustomers.map((customer) =>
+          customer._id === orderId ? { ...customer, response: newResponse } : customer
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update response:", error);
+      message.error("Failed to update response");
+    }
   };
 
   const responseColors = {
     "No Need": "red",
-    "Not Interest": "#FF6347", // Tomato
-    "Out of Station": "#8A2BE2", // BlueViolet
-    "Not Reachable": "#DC143C", // Crimson
+    "Not Interest": "#FF6347",
+    "Out of Station": "#8A2BE2",
+    "Not Reachable": "#DC143C",
     "Not Answering": "#DC143C",
-    "Other Shop": "#A52A2A", // Brown
-    "Visit Come to Shop": "#2E8B57", // SeaGreen
+    "Other Shop": "#A52A2A",
+    "Visit Come to Shop": "#2E8B57",
     Waiting: "orange",
     "Order Taken by Customer": "green",
-    "Customer need not possible": "#FF4500", // OrangeRed
+    "Customer need not possible": "#FF4500",
     "Whatsapp Model": "darkgreen",
+  };
+
+  const Colors = {
+    "No Need": "#000",
+    "Not Interest": "#000",
+    "Out of Station": "#000",
+    "Not Reachable": "#000",
+    "Not Answering": "#000",
+    "Other Shop": "#000",
+    "Visit Come to Shop": "#000",
+    Waiting: "#000",
+    "Order Taken by Customer": "#000",
+    "Customer need not possible": "#000",
+    "Whatsapp Model": "#000",
   };
 
   const responseOptions = ["Show All", ...Object.keys(responseColors)];
 
   const columns = [
-    {
-      title: "No",
-      dataIndex: "no",
-      key: "no",
-      render: (text, record, index) => index + 1,
-    },
-
+    { title: "No", dataIndex: "no", key: "no", render: (text, record, index) => index + 1 },
     { title: "Name", dataIndex: "customer_name", key: "customer_name" },
     { title: "Phone", dataIndex: "customer_phone", key: "customer_phone" },
-    { title: "Response", dataIndex: "response", key: "response" },
+    {
+      title: "Response",
+      dataIndex: "response",
+      key: "response",
+      render: (response, record) => (
+        <Dropdown
+          overlay={
+            <Menu onClick={(e) => handleMenuClick(e, record._id)}>
+              {Object.keys(Colors).map((option) => (
+                <Menu.Item key={option} style={{ color: Colors[option] }}>
+                  {option}
+                </Menu.Item>
+              ))}
+            </Menu>
+          }
+          trigger={["click"]}
+        >
+          <a onClick={(e) => e.preventDefault()} style={{ color: responseColors[response] || "black" }}
+          >
+            {response || "Select Response"}
+          </a>
+        </Dropdown>
+      ),
+    },
     { title: "Cake Model", dataIndex: "cake_model", key: "cake_model" },
     { title: "Price", dataIndex: "amount", key: "amount" },
     {
@@ -267,7 +322,7 @@ const CustomerInformation = () => {
             style={{ width: 150, marginRight: 10 }}
           >
             <Option value="orderDate">Order Date</Option>
-            <Option value="birthdayDate">birthday Date</Option>
+            <Option value="birthdayDate">Birthday Date</Option>
           </Select>
           <RangePicker value={dateRange} onChange={handleRangeChange} />
         </div>

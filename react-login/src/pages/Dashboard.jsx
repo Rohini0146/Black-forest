@@ -34,40 +34,65 @@ const Dashboard = () => {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 1023);
   const [stores, setStores] = useState([]);
   const [filteredStores, setFilteredStores] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [employeeName, setEmployeeName] = useState(""); // State to store employee name
+  const [loading, setLoading] = useState(true); // New loading state
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [employeeName, setEmployeeName] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Redirect to login if no EmployeeID is found in localStorage
+  // Initialization to check login status and fetch data if authenticated
   useEffect(() => {
-    if (!localStorage.getItem("EmployeeID")) {
-      navigate("/login");
-    } else {
+    const employeeId = localStorage.getItem("EmployeeID");
+    if (employeeId) {
+      setIsLoggedIn(true);
       fetchEmployeeData();
+    } else {
+      setIsLoggedIn(false);
+      navigate("/login");
     }
-  }, []);
+    setLoading(false); // Set loading to false after initialization
 
-  // Function to log out user
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("EmployeeID");
-    sessionStorage.removeItem("sessionActive"); // Clear session flag
-    navigate("/login");
-  };
+    // Handle logout when the tab or browser is closed
+    const handleTabClose = () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("EmployeeID");
+      sessionStorage.removeItem("sessionActive");
+    };
 
-  // Function to fetch employee data based on EmployeeID stored in localStorage
+    // Logout automatically at midnight
+    const logoutAtMidnight = () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("EmployeeID");
+      sessionStorage.removeItem("sessionActive");
+      setIsLoggedIn(false);
+      navigate("/login");
+    };
+
+    const now = new Date();
+    const nextMidnight = new Date();
+    nextMidnight.setHours(24, 0, 0, 0);
+
+    const timeUntilMidnight = nextMidnight - now;
+    const midnightTimer = setTimeout(() => {
+      logoutAtMidnight();
+    }, timeUntilMidnight);
+
+    // Cleanup event listener and timer on unmount
+    return () => {
+      window.removeEventListener("beforeunload", handleTabClose);
+      clearTimeout(midnightTimer);
+    };
+  }, [navigate]);
+
+  // Fetch employee data based on EmployeeID
   const fetchEmployeeData = async () => {
     const employeeId = localStorage.getItem("EmployeeID");
-    console.log("EmployeeID from localStorage:", employeeId);
-
     if (employeeId) {
       try {
         const response = await axios.get(
           `http://43.205.54.210:3001/employees/${employeeId}`
         );
-
         if (
           response.data &&
           response.data.FirstName &&
@@ -76,17 +101,20 @@ const Dashboard = () => {
           setEmployeeName(
             `${response.data.FirstName} ${response.data.LastName}`
           );
-        } else {
-          console.error("Employee data not found or structure is incorrect");
         }
       } catch (error) {
         console.error("Error fetching employee data:", error);
       }
-    } else {
-      console.warn("No EmployeeID found in localStorage");
     }
   };
-  
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("EmployeeID");
+    sessionStorage.removeItem("sessionActive");
+    setIsLoggedIn(false);
+    navigate("/login");
+  };
 
   const getMenuKeyFromPath = () => {
     const path = location.pathname;
@@ -159,6 +187,11 @@ const Dashboard = () => {
       </Menu.Item>
     </Menu>
   );
+
+  // Show a loading state or nothing until login check is complete
+  if (loading) {
+    return null; // Optional loading indicator can be added here
+  }
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
