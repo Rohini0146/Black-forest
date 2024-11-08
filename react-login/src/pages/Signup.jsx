@@ -12,11 +12,11 @@ import logo from "../images/Logo-bk.png";
 import "./LoginSignup.css";
 import { TabPane } from "react-bootstrap";
 
+const { Option } = Select;
+
 const Signup = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  const navigates = useNavigate();
   const location = useLocation();
 
   const handleTabChange = (key) => {
@@ -30,11 +30,10 @@ const Signup = () => {
         phonenumber: values.phone,
         password: values.password, // Include password in the request
         verificationCode: values.verificationCode,
-        EmployeeID:values.EmployeeID,
+        EmployeeID: values.EmployeeID,
         FirstName: values.FirstName,
         LastName: values.LastName,
         BranchLocation: values.BranchLocation,
-        
       });
       console.log("Signup response:", response.data);
       if (response.data) {
@@ -66,154 +65,160 @@ const Signup = () => {
             onChange={handleTabChange} // Handles tab changes for navigation
             centered
           >
-            <TabPane tab="Login" key="/login">
+            <Tabs.TabPane tab="Login" key="/login">
               {/* Add your login page content here */}
-            </TabPane>
-            <TabPane tab="Sign Up" key="/signup">
-              {/* Add your signup page content here */}
-            </TabPane>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Sign Up" key="/signup">
+              {/* Sign Up form content */}
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Stock Login" key="/stocklogin">
+              {/* Placeholder for Stock Login */}
+              {/* This will navigate to /stocklogin */}
+            </Tabs.TabPane>
           </Tabs>
         </div>
 
-        <Form
-          name="signup"
-          onFinish={handleSubmit}
-          className="signup-form"
-          layout="vertical"
-        >
-          <Form.Item
-            name="EmployeeID"
-            rules={[
-              {
-                required: true,
-                message: "Employee ID is required",
-              },
-              {
-                pattern: /^[0-9]{4,5}$/,
-                message: "Please enter a valid Employee ID (4 to 5 digits)",
-              },
-            ]}
+        {/* Sign Up Form */}
+        {location.pathname === "/signup" && (
+          <Form
+            name="signup"
+            onFinish={handleSubmit}
+            className="signup-form"
+            layout="vertical"
           >
-            <Input
-              prefix={<UserOutlined />}
-              placeholder="Employee ID"
-              type="tel"
-            />
-          </Form.Item>
+            <Form.Item
+              name="EmployeeID"
+              rules={[
+                {
+                  required: true,
+                  message: "Employee ID is required",
+                },
+                {
+                  pattern: /^[0-9]{4,5}$/,
+                  message: "Please enter a valid Employee ID (4 to 5 digits)",
+                },
+              ]}
+            >
+              <Input
+                prefix={<UserOutlined />}
+                placeholder="Employee ID"
+                type="tel"
+              />
+            </Form.Item>
 
-          {/* First Name and Last Name */}
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="FirstName"
-                rules={[
-                  {
-                    required: true,
-                    message: "First Name is required",
-                  },
-                ]}
-              >
-                <Input placeholder="First Name" prefix={<UserOutlined />} />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="LastName"
-                rules={[
-                  {
-                    required: true,
-                    message: "Last Name is required",
-                  },
-                ]}
-              >
-                <Input placeholder="Last Name" prefix={<UserOutlined />} />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item
-            name="BranchLocation"
-            style={{ textAlign: "start" }}
-            rules={[
-              {
-                required: true,
-                message: "Branch location is required",
-              },
-            ]}
-          >
-            <Select placeholder="Branch Location">
-              <Option value="branch-1">Branch 1</Option>
-              <Option value="branch-2">Branch 2</Option>
-              <Option value="branch-3">Branch 3</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="phone"
-            rules={[
-              {
-                required: true,
-                message: "Please input your phone number!",
-              },
-              {
-                pattern: /^[0-9]{10}$/,
-                message: "Please enter a valid 10-digit phone number!",
-              },
-            ]}
-          >
-            <Input
-              prefix={<MobileOutlined />}
-              placeholder="Phone number"
-              type="tel"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="verificationCode"
-            rules={[
-              {
-                required: true,
-                message: "Please input the verification code!",
-              },
-            ]}
-          >
-            <Row gutter={8}>
-              <Col span={16}>
-                <Input
-                  prefix={<MailOutlined />}
-                  placeholder="Verification code"
-                />
-              </Col>
-              <Col span={8}>
-                <Button
-                  style={{ width: "100%" }}
-                  onClick={() => alert("Code sent to your phone")}
+            {/* First Name and Last Name */}
+            <Row gutter={16}>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  name="FirstName"
+                  rules={[
+                    {
+                      required: true,
+                      message: "First Name is required",
+                    },
+                  ]}
                 >
-                  Get Code
-                </Button>
+                  <Input placeholder="First Name" prefix={<UserOutlined />} />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  name="LastName"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Last Name is required",
+                    },
+                  ]}
+                >
+                  <Input placeholder="Last Name" prefix={<UserOutlined />} />
+                </Form.Item>
               </Col>
             </Row>
-          </Form.Item>
 
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              style={{
-                width: "100%",
-                borderRadius: "5px",
-                backgroundColor: "#1890ff",
-              }}
+            <Form.Item
+              name="BranchLocation"
+              style={{ textAlign: "start" }}
+              rules={[
+                {
+                  required: true,
+                  message: "Branch location is required",
+                },
+              ]}
             >
-              Sign Up
-            </Button>
-          </Form.Item>
-        </Form>
+              <Select placeholder="Branch Location">
+                <Option value="branch-1">Branch 1</Option>
+                <Option value="branch-2">Branch 2</Option>
+                <Option value="branch-3">Branch 3</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="phone"
+              rules={[
+                {
+                  required: true,
+                  message: "Please input your phone number!",
+                },
+                {
+                  pattern: /^[0-9]{10}$/,
+                  message: "Please enter a valid 10-digit phone number!",
+                },
+              ]}
+            >
+              <Input
+                prefix={<MobileOutlined />}
+                placeholder="Phone number"
+                type="tel"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="verificationCode"
+              rules={[
+                {
+                  required: true,
+                  message: "Please input the verification code!",
+                },
+              ]}
+            >
+              <Row gutter={8}>
+                <Col span={16}>
+                  <Input
+                    prefix={<MailOutlined />}
+                    placeholder="Verification code"
+                  />
+                </Col>
+                <Col span={8}>
+                  <Button
+                    style={{ width: "100%" }}
+                    onClick={() => alert("Code sent to your phone")}
+                  >
+                    Get Code
+                  </Button>
+                </Col>
+              </Row>
+            </Form.Item>
+
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                style={{
+                  width: "100%",
+                  borderRadius: "5px",
+                  backgroundColor: "#1890ff",
+                }}
+              >
+                Sign Up
+              </Button>
+            </Form.Item>
+          </Form>
+        )}
 
         <footer style={{ marginTop: "20px", fontSize: "12px", color: "#888" }}>
           <p>Black Forest Cake</p>
-          
         </footer>
       </div>
     </div>

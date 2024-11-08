@@ -1,12 +1,12 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const UserModel = require("./models/Users");
 const EmployeeModel = require("./models/Employee");
 const LoginDataModel = require("./models/LoginData");
 const OrderModel = require("./models/Orders");
 const stores = require("./models/Stores");
 const status = require("./models/OrderStatus");
+const AddUser = require("./models/AddUser")
 require("dotenv").config();
 
 const app = express();
@@ -32,30 +32,47 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
+  
+  app.post('/adduser', async (req, res) => {
+    try {
+      const newUser = new AddUser(req.body);
+      await newUser.save();
+      res.status(201).json({ message: 'User created successfully!' });
+    } catch (error) {
+      if (error.code === 11000) { // Duplicate key error
+        res.status(400).json({ message: 'Username already exists. Please choose a different username.' });
+      } else {
+        res.status(500).json({ message: 'Error creating user. Please try again.' });
+      }
+    }
+  });
+
+  
+
 // API Routes
 app.post("/login", async (req, res) => {
   try {
-    const { EmployeeID } = req.body;
-    const userAgent = req.headers["user-agent"];
-    const currentDateIST = new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000);
-
-    const employee = await EmployeeModel.findOne({
-      EmployeeID: new RegExp(EmployeeID, "i"),
+    const { username, password, mobileNumber, role } = req.body;
+    
+    // Validate against the database
+    const user = await AddUser.findOne({ 
+      username, 
+      password, 
+      mobileNumber, 
+      type: role 
     });
-    if (!employee) return res.status(401).json("Invalid Employee ID");
-
-    await LoginDataModel.create({
-      EmployeeID: employee.EmployeeID,
-      loginTime: currentDateIST,
-      userAgent,
-    });
-
-    res.json("Login Successful");
+    
+    if (user) {
+      res.status(200).json("Login Successful");
+    } else {
+      res.status(401).json("Invalid credentials. Please try again.");
+    }
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json("Error during login");
   }
 });
+
 
 app.post("/signup", async (req, res) => {
   try {
@@ -66,6 +83,9 @@ app.post("/signup", async (req, res) => {
     res.status(500).json({ error: "Failed to create employee", details: error });
   }
 });
+
+
+
 
 app.post("/order", async (req, res) => {
   try {

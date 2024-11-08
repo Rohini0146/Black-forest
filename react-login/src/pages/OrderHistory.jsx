@@ -242,31 +242,14 @@ const OrderHistory = () => {
         )
       );
   
-      // Prevent any automatic change in active tab
     } catch (error) {
       console.error("Failed to update response:", error);
       message.error("Failed to update response");
     }
   };
   
-  
-
-  const colorMap = {
-    "No Need": "red",
-    "Not Interest": "#FF6347", // Tomato
-    "Out of Station": "#8A2BE2", // BlueViolet
-    "Not Reachable": "#DC143C", // Crimson
-    "Not Answering": "#DC143C",
-    "Other Shop": "#A52A2A", // Brown
-    "Visit Come to Shop": "#2E8B57", // SeaGreen
-    Waiting: "orange",
-    "Order Taken by Customer": "green",
-    "Customer need not possible": "#FF4500", // OrangeRed
-    "Whatsapp Model": "darkgreen",
-  };
-
   // Menu component for dropdown
-  const menu = (orderId, selectedResponse, handleMenuClick) => (
+  const menu = (orderId) => (
     <Menu onClick={(e) => handleMenuClick(e, orderId)}>
       {Object.keys(responseColors).map((key) => (
         <Menu.Item
@@ -278,18 +261,35 @@ const OrderHistory = () => {
       ))}
     </Menu>
   );
+  
+  
+
+  const colorMap = {
+    "No Need": "red",
+    "Not Interest": "#000", 
+    "Out of Station": "#000", 
+    "Not Reachable": "#000", 
+    "Not Answering": "red",
+    "Other Shop": "#000",
+    "Visit Come to Shop": "#000",
+    'Waiting': "orange",
+    "Order Taken by Customer": "#000",
+    "Customer need not possible": "#000",
+    "Whatsapp Model": "darkgreen",
+  };
+
 
   const responseColors = {
-    "No Need": "red",
-    "Not Interest": "#FF6347", // Tomato
-    "Out of Station": "#8A2BE2", // BlueViolet
-    "Not Reachable": "#DC143C", // Crimson
-    "Not Answering": "#DC143C",
-    "Other Shop": "#A52A2A", // Brown
-    "Visit Come to Shop": "#2E8B57", // SeaGreen
-    "Waiting": "orange",
-    "Order Taken by Customer": "green",
-    "Customer need not possible": "#FF4500", // OrangeRed
+   "No Need": "red",
+    "Not Interest": "#000", 
+    "Out of Station": "#000", 
+    "Not Reachable": "#000", 
+    "Not Answering": "red",
+    "Other Shop": "#000",
+    "Visit Come to Shop": "#000",
+    'Waiting': "orange",
+    "Order Taken by Customer": "#000",
+    "Customer need not possible": "#000",
     "Whatsapp Model": "darkgreen",
   };
 
