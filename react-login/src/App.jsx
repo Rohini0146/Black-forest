@@ -1,45 +1,68 @@
-import React from "react";
-import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
-import Home from "./Home";
+import Profile from "./pages/Profile";
 import CustomerInformation from "./pages/CustomerInformation";
 import OrderInformation from "./pages/OrderInformation";
 import OrderHistory from "./pages/OrderHistory";
-import Order from "./pages/Order";
-import "./App.css";
 import Logs from "./pages/Logs";
+import BranchOrder from "./pages/BranchOrder";
+import LiveBranchOrders from "./pages/LiveBranchOrders";
+import ReturnOrder from "./pages/ReturnOrder";
+import StockOrder from "./pages/StockOrder";
 import Dashboard from "./pages/Dashboard";
-import Profile from "./stockorder/Profile";
-import BranchOrder from "./stockorder/BranchOrder";
-import StockLogin from "./stockorder/StockLogin"; 
-import LiveBranchOrders from "./stockorder/LiveBranchOrders";
+import "./App.css";
 
 function App() {
+  const [userAccess, setUserAccess] = useState([]);
+  const isSuperAdmin = localStorage.getItem("role") === "superadmin";
+
+  useEffect(() => {
+    const access = JSON.parse(localStorage.getItem("access")) || [];
+    setUserAccess(access);
+  }, []);
+
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/signup" replace />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/stocklogin" element={<StockLogin />}/>
 
-        <Route path="/dashboard" element={<Dashboard />}>
-          <Route path="customer-information" element={<CustomerInformation />} />
-          <Route path="order-information" element={<OrderInformation />} />
-          <Route path="order-history" element={<OrderHistory />} />
-          <Route path="logs" element={<Logs />} />
-        </Route>
-
-        {/* Profile layout with nested routes */}
+        {/* Profile as Main Page */}
         <Route path="/profile" element={<Profile />}>
-          <Route path="branch-order" element={<BranchOrder />} />
-          <Route path="live-branch-order" element={<LiveBranchOrders />} />
-          {/* Add additional sub-routes under /profile as needed */}
+        {(isSuperAdmin || userAccess.includes("dashboard")) && (
+            <Route path="dashboard" element={<Dashboard />} />
+          )}
+          {(isSuperAdmin || userAccess.includes("customer-information")) && (
+            <Route path="customer-information" element={<CustomerInformation />} />
+          )}
+          {(isSuperAdmin || userAccess.includes("live-order")) && (
+            <Route path="live-order" element={<OrderInformation />} />
+          )}
+          {(isSuperAdmin || userAccess.includes("order-history")) && (
+            <Route path="order-history" element={<OrderHistory />} />
+          )}
+          {(isSuperAdmin || userAccess.includes("logs")) && (
+            <Route path="logs" element={<Logs />} />
+          )}
+          {(isSuperAdmin || userAccess.includes("branch-order")) && (
+            <Route path="branch-order" element={<BranchOrder />} />
+          )}
+          {(isSuperAdmin || userAccess.includes("live-branch-order")) && (
+            <Route path="live-branch-order" element={<LiveBranchOrders />} />
+          )}
+          {(isSuperAdmin || userAccess.includes("return-order")) && (
+            <Route path="return-order" element={<ReturnOrder />} />
+          )}
+           {(isSuperAdmin || userAccess.includes("stock-order")) && (
+            <Route path="stock-order" element={<StockOrder />} />
+          )}
         </Route>
 
-        <Route path="/order" element={<Order />} />
+        {/* Redirect to Profile as a fallback */}
+        <Route path="*" element={<Navigate to="/profile" replace />} />
       </Routes>
     </Router>
   );

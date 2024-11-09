@@ -1,0 +1,24 @@
+.profile-form{
+    margin-top: 20px;
+}
+
+
+.profile-content{
+    padding: 16px;
+    background: #fff;
+}
+
+
+/* Custom Sider Scrollbar */
+.custom-sider::-webkit-scrollbar {
+    width: 6px; /* Make scrollbar narrow */
+    height: 25px;
+  }
+  
+  .custom-sider::-webkit-scrollbar-thumb {
+    background-color: #888; /* Scrollbar color */
+    border-radius: 3px;
+  }
+  
+  
+  

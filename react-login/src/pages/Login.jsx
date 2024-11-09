@@ -1,66 +1,55 @@
-import React, { useState } from "react";
+import React from "react";
 import axios from "axios";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Form, Input, Button, Tabs, Row, Col, Select } from "antd";
-import { UserOutlined, LockOutlined, PhoneOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+import { Form, Input, Button, Tabs } from "antd";
+import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import logo from "../images/Logo-bk.png";
 import "./LoginSignup.css";
 
 const { TabPane } = Tabs;
-const { Option } = Select;
-
-// Hardcoded admin ID and password for superadmin role
-const SUPERADMIN_ID = "20212024";
-const SUPERADMIN_PASSWORD = "cake@2024";
 
 const Login = () => {
-  const [role, setRole] = useState("");
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const handleTabChange = (key) => {
-    navigate(key);
-  };
 
   const handleLoginSubmit = async (values) => {
     try {
+      // Attempt to login with the provided username and password
       const response = await axios.post("http://43.205.54.210:3001/login", {
         username: values.username,
         password: values.password,
-        mobileNumber: values.mobileNumber,
-        role: values.role,
       });
-  
-      if (response.status === 200 && response.data.message === "Login Successful") {
-        const { access } = response.data.user; // Assuming your API response includes the user's access
+
+      if (response.status === 200 && response.data === "Login Successful") {
+        // Fetch user details to determine role and access
+        const user = await axios.get(`http://43.205.54.210:3001/getUserByUsername/${values.username}`);
+        
+        // Save user details in local storage
+        localStorage.setItem("role", user.data.type); // Save user role
+        localStorage.setItem("access", JSON.stringify(user.data.access));  // Save access levels
         localStorage.setItem("username", values.username);
-        localStorage.setItem("access", JSON.stringify(access)); // Save access array to local storage
-        navigate("/profile");
+
+        alert("Login Successful!");
+        navigate("/profile");  // Redirect to profile
       } else {
         alert(response.data || "Login failed. Please try again.");
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert(error.response?.data || "An error occurred. Please try again.");
+      alert("An error occurred. Please try again.");
     }
   };
-
-  
 
   return (
     <div className="login-page">
       <div className="login-signup-container">
         <div className="logo-container">
           <img src={logo} alt="Logo for Black Forest Cakes" />
-          <p>
-            Black Forest Cakes: The King of Cakes, where every slice is a
-            masterpiece.
-          </p>
+          <p>Black Forest Cakes: The King of Cakes, where every slice is a masterpiece.</p>
         </div>
 
         <div className="auth-tabs">
-          <Tabs activeKey={location.pathname} onChange={handleTabChange} centered>
-            <TabPane tab="Login" key="/login">
+          <Tabs centered>
+            <TabPane tab="Login" key="login">
               <Form
                 name="login"
                 onFinish={handleLoginSubmit}
@@ -68,95 +57,29 @@ const Login = () => {
                 layout="vertical"
               >
                 <Form.Item
-                  name="role"
-                  rules={[{ required: true, message: "Role is required" }]}
+                  name="username"
+                  rules={[{ required: true, message: "Username is required" }]}
                 >
-                  <Select
-                    placeholder="Select Role"
-                    onChange={(value) => setRole(value)}
-                  >
-                    <Option value="waiter">Waiter</Option>
-                    <Option value="chef">Chef</Option>
-                    <Option value="manager">Manager</Option>
-                    <Option value="admin">Admin</Option>
-                    <Option value="superadmin">Super Admin</Option>
-                  </Select>
+                  <Input prefix={<UserOutlined />} placeholder="Username" />
                 </Form.Item>
-
-                {role === "superadmin" ? (
-                  <>
-                    <Form.Item
-                      name="adminID"
-                      rules={[{ required: true, message: "Admin ID is required for superadmin" }]}
-                    >
-                      <Input
-                        prefix={<UserOutlined />}
-                        placeholder="Admin ID"
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      name="password"
-                      rules={[{ required: true, message: "Password is required" }]}
-                    >
-                      <Input.Password
-                        prefix={<LockOutlined />}
-                        placeholder="Password"
-                      />
-                    </Form.Item>
-                  </>
-                ) : (
-                  <>
-                    <Form.Item
-                      name="username"
-                      rules={[{ required: true, message: "Username is required" }]}
-                    >
-                      <Input
-                        prefix={<UserOutlined />}
-                        placeholder="Username"
-                      />
-                    </Form.Item>
-
-                    <Form.Item
-                      name="password"
-                      rules={[{ required: true, message: "Password is required" }]}
-                    >
-                      <Input.Password
-                        prefix={<LockOutlined />}
-                        placeholder="Password"
-                      />
-                    </Form.Item>
-
-                    <Form.Item
-                      name="mobileNumber"
-                      rules={[
-                        { required: true, message: "Mobile number is required" },
-                        { pattern: /^[0-9]{10}$/, message: "Enter a valid 10-digit mobile number" },
-                      ]}
-                    >
-                      <Input
-                        prefix={<PhoneOutlined />}
-                        placeholder="Mobile Number"
-                      />
-                    </Form.Item>
-                  </>
-                )}
+                <Form.Item
+                  name="password"
+                  rules={[{ required: true, message: "Password is required" }]}
+                >
+                  <Input.Password prefix={<LockOutlined />} placeholder="Password" />
+                </Form.Item>
 
                 <Form.Item>
                   <Button
                     type="primary"
                     htmlType="submit"
-                    style={{
-                      width: "100%",
-                      borderRadius: "5px",
-                      backgroundColor: "#1890ff",
-                    }}
+                    style={{ width: "100%", borderRadius: "5px", backgroundColor: "#1890ff" }}
                   >
                     Sign In
                   </Button>
                 </Form.Item>
               </Form>
             </TabPane>
-
           </Tabs>
         </div>
 

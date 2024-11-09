@@ -47,6 +47,10 @@
     height: 100vh;
   }
 
+  .dashboard{
+    background: transparent !important;
+  }
+
   @media (max-width: 900px) {
     main.ant-layout-content{
       margin: 0 !important;

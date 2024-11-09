@@ -52,26 +52,38 @@ mongoose
 // API Routes
 app.post("/login", async (req, res) => {
   try {
-    const { username, password, mobileNumber, role } = req.body;
-    
-    // Validate against the database
-    const user = await AddUser.findOne({ 
-      username, 
-      password, 
-      mobileNumber, 
-      type: role 
-    });
-    
+    const { username, password } = req.body;
+
+    // Validate user credentials with only username and password
+    const user = await AddUser.findOne({ username, password });
+
     if (user) {
+      // On successful login, return only a success message (data fetched in next step)
       res.status(200).json("Login Successful");
     } else {
-      res.status(401).json("Invalid credentials. Please try again.");
+      res.status(401).json({ message: "Invalid username or password. Please try again." });
     }
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json("Error during login");
+    res.status(500).json({ message: "Error during login" });
   }
 });
+
+// API to fetch user details by username (for access and role after login)
+app.get("/getUserByUsername/:username", async (req, res) => {
+  try {
+    const user = await AddUser.findOne({ username: req.params.username });
+    if (user) {
+      res.status(200).json(user); // Return the user details with access levels
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Error fetching user" });
+  }
+});
+
 
 
 app.post("/signup", async (req, res) => {
