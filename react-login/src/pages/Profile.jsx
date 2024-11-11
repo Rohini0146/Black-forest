@@ -22,6 +22,7 @@ import {
   LineChartOutlined,
   UserOutlined,
   ShoppingCartOutlined,
+  UsergroupAddOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
@@ -49,6 +50,7 @@ const Profile = () => {
   // All available pages for access
   const allPages = [
     "profile",
+    "employees",
     "live-branch-order",
     "branch-order",
     "stock-order",
@@ -70,6 +72,7 @@ const Profile = () => {
   // Define icons for menu items
   const iconMap = {
     profile: <UserAddOutlined />,
+    "employees": <UsergroupAddOutlined />,
     "live-branch-order": <ShopOutlined />,
     "branch-order": <ShoppingCartOutlined />,
     "stock-order": <OrderedListOutlined />,
@@ -132,12 +135,32 @@ const Profile = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const response = await axios.post("http://43.205.54.210:3001/logout", {
+        username: localStorage.getItem("username"), // Send the current username
+      });
+  
+      if (response.status === 200) {
+        localStorage.removeItem("role");
+        localStorage.removeItem("access");
+        localStorage.removeItem("username");
+  
+        // Redirect to login page
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      alert("An error occurred during logout. Please try again.");
+    }
+  };
+  
   // User dropdown menu for settings and logout
   const userMenu = (
     <Menu>
       <Menu.Item key="settings">Settings</Menu.Item>
       <Menu.Divider />
-      <Menu.Item key="logout" onClick={() => navigate("/login")}>
+      <Menu.Item key="logout" onClick={handleLogout}>
         Logout
       </Menu.Item>
     </Menu>
@@ -238,7 +261,7 @@ const Profile = () => {
           </div>
         </Header>
 
-        <Content style={{ padding: "16px" }}>
+        <Content className="profile-padd">
           {location.pathname === "/profile" ? (
             <>
               <div className="profile-content">
@@ -264,11 +287,11 @@ const Profile = () => {
                   </h2>
                   <Form
                     layout="vertical"
-                    style={{ maxWidth: "800px", margin: "auto" }}
+                    style={{ maxWidth: "800px",  }}
                     onFinish={submitForm}
                   >
                     <Row gutter={16}>
-                      <Col span={12}>
+                      <Col xs={24} sm={12}>
                         <Form.Item
                           label="Username"
                           name="username"
@@ -282,7 +305,7 @@ const Profile = () => {
                           <Input placeholder="Enter username" />
                         </Form.Item>
                       </Col>
-                      <Col span={12}>
+                      <Col xs={24} sm={12}>
                         <Form.Item
                           label="Password"
                           name="password"
@@ -298,7 +321,7 @@ const Profile = () => {
                       </Col>
                     </Row>
                     <Row gutter={16}>
-                      <Col span={12}>
+                      <Col xs={24} sm={12}>
                         <Form.Item
                           label="Mobile Number"
                           name="mobileNumber"
@@ -312,7 +335,7 @@ const Profile = () => {
                           <Input placeholder="Enter mobile number" />
                         </Form.Item>
                       </Col>
-                      <Col span={12}>
+                      <Col xs={24} sm={12}>
                         <Form.Item label="Email ID" name="email">
                           <Input placeholder="Enter email ID" />
                         </Form.Item>
@@ -326,7 +349,7 @@ const Profile = () => {
                       </Col>
                     </Row>
                     <Row gutter={16}>
-                      <Col span={12}>
+                      <Col xs={24} sm={12}>
                         <Form.Item
                           label="Branch"
                           name="branch"
@@ -346,7 +369,7 @@ const Profile = () => {
                           </Select>
                         </Form.Item>
                       </Col>
-                      <Col span={12}>
+                      <Col xs={24} sm={12}>
                         <Form.Item
                           label="Type"
                           name="type"

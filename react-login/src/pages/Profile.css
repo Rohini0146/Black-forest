@@ -1,24 +1,48 @@
-.profile-form{
-    margin-top: 20px;
+.profile-form {
+  margin-top: 20px;
 }
 
-
-.profile-content{
-    padding: 16px;
-    background: #fff;
+.profile-content {
+  padding: 16px 24px;
+  background: #fff;
 }
 
+.custom-sider {
+  height: 100vh; /* Full height of the screen */
+  overflow-y: auto; /* Enables vertical scrolling when content overflows */
+  position: relative;
+}
+
+.custom-sider .ant-menu {
+  padding-bottom: 60px; /* Add some padding at the bottom to avoid cutoff */
+}
 
 /* Custom Sider Scrollbar */
 .custom-sider::-webkit-scrollbar {
-    width: 6px; /* Make scrollbar narrow */
-    height: 25px;
+  width: 4px; /* Make scrollbar narrow */
+}
+
+.custom-sider::-webkit-scrollbar-thumb {
+  background-color: #888; /* Scrollbar color */
+  border-radius: 3px;
+}
+
+.profile-padd{
+  padding: 16px;
+}
+
+@media(max-width:768px) {
+  li.ant-menu-item{
+    padding-left: 16px !important;
   }
-  
-  .custom-sider::-webkit-scrollbar-thumb {
-    background-color: #888; /* Scrollbar color */
-    border-radius: 3px;
+  .custom-sider::-webkit-scrollbar {
+    width: 2px;
   }
-  
-  
-  
+  .profile-padd{
+    padding: 0;
+  }
+  .profile-content{
+    padding: 16px;
+  }
+}
+

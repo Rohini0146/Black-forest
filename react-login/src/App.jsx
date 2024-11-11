@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Signup from "./pages/Signup";
+import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import CustomerInformation from "./pages/CustomerInformation";
@@ -13,6 +12,7 @@ import ReturnOrder from "./pages/ReturnOrder";
 import StockOrder from "./pages/StockOrder";
 import Dashboard from "./pages/Dashboard";
 import "./App.css";
+import Employees from "./pages/Employees";
 
 function App() {
   const [userAccess, setUserAccess] = useState([]);
@@ -26,8 +26,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/signup" replace />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
 
         {/* Profile as Main Page */}
@@ -52,6 +51,9 @@ function App() {
           )}
           {(isSuperAdmin || userAccess.includes("live-branch-order")) && (
             <Route path="live-branch-order" element={<LiveBranchOrders />} />
+          )}
+          {(isSuperAdmin || userAccess.includes("employees")) && (
+            <Route path="employees" element={<Employees />} />
           )}
           {(isSuperAdmin || userAccess.includes("return-order")) && (
             <Route path="return-order" element={<ReturnOrder />} />

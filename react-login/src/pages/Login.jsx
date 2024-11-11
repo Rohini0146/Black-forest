@@ -13,23 +13,26 @@ const Login = () => {
 
   const handleLoginSubmit = async (values) => {
     try {
-      // Attempt to login with the provided username and password
       const response = await axios.post("http://43.205.54.210:3001/login", {
         username: values.username,
         password: values.password,
       });
-
+  
       if (response.status === 200 && response.data === "Login Successful") {
-        // Fetch user details to determine role and access
         const user = await axios.get(`http://43.205.54.210:3001/getUserByUsername/${values.username}`);
         
-        // Save user details in local storage
-        localStorage.setItem("role", user.data.type); // Save user role
-        localStorage.setItem("access", JSON.stringify(user.data.access));  // Save access levels
+        // Check if the user is force-logged-out
+        if (user.data.forceLogout) {
+          alert("Your account has been forcefully logged out. Please contact admin.");
+          return;
+        }
+  
+        localStorage.setItem("role", user.data.type);
+        localStorage.setItem("access", JSON.stringify(user.data.access));
         localStorage.setItem("username", values.username);
-
+  
         alert("Login Successful!");
-        navigate("/profile");  // Redirect to profile
+        navigate("/profile");
       } else {
         alert(response.data || "Login failed. Please try again.");
       }
@@ -38,6 +41,7 @@ const Login = () => {
       alert("An error occurred. Please try again.");
     }
   };
+  
 
   return (
     <div className="login-page">

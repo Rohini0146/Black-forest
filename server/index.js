@@ -6,19 +6,24 @@ const LoginDataModel = require("./models/LoginData");
 const OrderModel = require("./models/Orders");
 const stores = require("./models/Stores");
 const status = require("./models/OrderStatus");
-const AddUser = require("./models/AddUser")
+const AddUser = require("./models/AddUser");
 require("dotenv").config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
-app.use(cors({
-  origin: ['http://43.205.54.210', 'http://yourdomain.com']
-}));
+app.use(
+  cors({
+    origin: ["http://43.205.54.210", "http://yourdomain.com"],
+  })
+);
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   next();
 });
@@ -32,33 +37,76 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-  
-  app.post('/adduser', async (req, res) => {
-    try {
-      const newUser = new AddUser(req.body);
-      await newUser.save();
-      res.status(201).json({ message: 'User created successfully!' });
-    } catch (error) {
-      if (error.code === 11000) { // Duplicate key error
-        res.status(400).json({ message: 'Username already exists. Please choose a different username.' });
-      } else {
-        res.status(500).json({ message: 'Error creating user. Please try again.' });
-      }
+app.post("/adduser", async (req, res) => {
+  try {
+    const newUser = new AddUser(req.body);
+    await newUser.save();
+    res.status(201).json({ message: "User created successfully!" });
+  } catch (error) {
+    if (error.code === 11000) {
+      // Duplicate key error
+      res
+        .status(400)
+        .json({
+          message:
+            "Username already exists. Please choose a different username.",
+        });
+    } else {
+      res
+        .status(500)
+        .json({ message: "Error creating user. Please try again." });
     }
-  });
+  }
+});
 
-  
+// Get all users from addusers collection
+app.get("/addusers", async (req, res) => {
+  try {
+    const users = await AddUser.find(); // Make sure it's referencing AddUser (the model that uses 'addusers' collection)
+    res.status(200).json(users); // Send the users as a JSON response
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching users. Please try again." });
+  }
+});
+
+app.put("/addusers/:id/forceLogout", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedEmployee = await AddUser.findByIdAndUpdate(id, { forceLogout: true }, { new: true });
+
+    if (!updatedEmployee) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "User has been forcefully logged out" });
+  } catch (error) {
+    console.error("Error logging out user:", error);
+    res.status(500).json({ message: "Error logging out user" });
+  }
+});
+
 
 // API Routes
+// Login endpoint
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Validate user credentials with only username and password
     const user = await AddUser.findOne({ username, password });
 
     if (user) {
-      // On successful login, return only a success message (data fetched in next step)
+      // If the user is force-logged-out, prevent login
+      if (user.isForceLogout) {
+        return res.status(403).json({ message: "Your account has been forcefully logged out. Please contact admin." });
+      }
+
+      // Set isUserLogin to true when user logs in
+      user.isUserLogin = true;
+      user.lastLogin = new Date();
+      await user.save(); // Save the updated user data
+
       res.status(200).json("Login Successful");
     } else {
       res.status(401).json({ message: "Invalid username or password. Please try again." });
@@ -68,6 +116,62 @@ app.post("/login", async (req, res) => {
     res.status(500).json({ message: "Error during login" });
   }
 });
+
+
+
+
+// Logout endpoint (can be called when the user logs out normally)
+app.post("/logout", async (req, res) => {
+  try {
+    const { username } = req.body;
+
+    const user = await AddUser.findOne({ username });
+
+    if (user) {
+      // Set isUserLogin to false when the user logs out manually
+      user.isUserLogin = false;
+      await user.save(); // Save the updated user data
+
+      res.status(200).json({ message: "User logged out successfully" });
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({ message: "Error during logout" });
+  }
+});
+
+
+
+// Force logout endpoint
+app.put("/addusers/:id/forceLogout", async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`Force logout triggered for user with ID: ${id}`);  // Log the user ID for debugging
+
+    // Update the user to set `isUserLogin` to false and `isForceLogout` to true
+    const updatedEmployee = await AddUser.findByIdAndUpdate(
+      id, 
+      { isUserLogin: false, isForceLogout: true }, 
+      { new: true }
+    );
+
+    if (!updatedEmployee) {
+      console.log("User not found");  // Log if user is not found
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log("Force Logout Success:", updatedEmployee);  // Log success details
+
+    res.status(200).json({ message: "User has been forcefully logged out" });
+  } catch (error) {
+    console.error("Error during force logout:", error);  // Log the full error
+    res.status(500).json({ message: "Error logging out user" });
+  }
+});
+
+
 
 // API to fetch user details by username (for access and role after login)
 app.get("/getUserByUsername/:username", async (req, res) => {
@@ -84,20 +188,17 @@ app.get("/getUserByUsername/:username", async (req, res) => {
   }
 });
 
-
-
 app.post("/signup", async (req, res) => {
   try {
     const newEmployee = await EmployeeModel.create(req.body);
     res.json({ message: "Employee created successfully", data: newEmployee });
   } catch (error) {
     console.error("Error creating employee:", error);
-    res.status(500).json({ error: "Failed to create employee", details: error });
+    res
+      .status(500)
+      .json({ error: "Failed to create employee", details: error });
   }
 });
-
-
-
 
 app.post("/order", async (req, res) => {
   try {
@@ -143,12 +244,6 @@ app.get("/orders", async (req, res) => {
   }
 });
 
-
-
-
-
-
-
 app.get("/userdatas", async (req, res) => {
   try {
     const userDataLogs = await LoginDataModel.find().sort({ loginTime: -1 }); // Sort by loginTime descending
@@ -158,7 +253,6 @@ app.get("/userdatas", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch user datas" });
   }
 });
-
 
 app.get("/stores", async (req, res) => {
   try {
@@ -170,7 +264,6 @@ app.get("/stores", async (req, res) => {
   }
 });
 
-
 app.get("/orderstatus", async (req, res) => {
   try {
     const orderStatus = await status.find().sort({ createdAt: -1 });
@@ -180,7 +273,6 @@ app.get("/orderstatus", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch status" });
   }
 });
-
 
 app.put("/orders/:id/response", async (req, res) => {
   try {
@@ -204,7 +296,6 @@ app.put("/orders/:id/response", async (req, res) => {
   }
 });
 
-
 // Route to fetch a single employee by EmployeeID
 app.get("/employees/:employeeId", async (req, res) => {
   try {
@@ -222,12 +313,10 @@ app.get("/employees/:employeeId", async (req, res) => {
   }
 });
 
-
-
 // Start the server
 const PORT = process.env.PORT || 3001;
 
 // Change 'localhost' to '0.0.0.0'
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on http://43.205.54.210:${PORT}`);
 });

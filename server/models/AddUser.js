@@ -32,6 +32,9 @@ const AddUserSchema = new mongoose.Schema({
     type: [String],
     required: true,
   },
+  isUserLogin: { type: Boolean, default: false }, // Tracks if the user is logged in
+  isForceLogout: { type: Boolean, default: false }, // Tracks if the user is forced to logout
+  lastLogin: { type: Date, default: Date.now },
 });
 
 const AddUser = mongoose.model("adduser", AddUserSchema);
