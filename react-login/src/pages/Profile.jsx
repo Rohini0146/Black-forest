@@ -72,7 +72,7 @@ const Profile = () => {
   // Define icons for menu items
   const iconMap = {
     profile: <UserAddOutlined />,
-    "employees": <UsergroupAddOutlined />,
+    employees: <UsergroupAddOutlined />,
     "live-branch-order": <ShopOutlined />,
     "branch-order": <ShoppingCartOutlined />,
     "stock-order": <OrderedListOutlined />,
@@ -88,7 +88,7 @@ const Profile = () => {
     "payment-information": <DollarCircleOutlined />, // Replace with the appropriate icon
     "sales-person": <UserSwitchOutlined />, // Replace with the appropriate icon
     "customer-analysis": <LineChartOutlined />, // Replace with the appropriate icon
-    "logs": <UserOutlined />, // Replace with the appropriate icon
+    logs: <UserOutlined />, // Replace with the appropriate icon
   };
 
   // Fetch stores from the database
@@ -140,12 +140,12 @@ const Profile = () => {
       const response = await axios.post("http://43.205.54.210:3001/logout", {
         username: localStorage.getItem("username"), // Send the current username
       });
-  
+
       if (response.status === 200) {
         localStorage.removeItem("role");
         localStorage.removeItem("access");
         localStorage.removeItem("username");
-  
+
         // Redirect to login page
         navigate("/login");
       }
@@ -154,7 +154,7 @@ const Profile = () => {
       alert("An error occurred during logout. Please try again.");
     }
   };
-  
+
   // User dropdown menu for settings and logout
   const userMenu = (
     <Menu>
@@ -178,7 +178,13 @@ const Profile = () => {
         "http://43.205.54.210:3001/adduser",
         userData
       );
+
       message.success(response.data.message);
+
+      // Reload the page after showing the success message for 1 second
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       if (error.response && error.response.status === 400) {
         message.error(error.response.data.message); // Display error message for duplicate username
@@ -287,7 +293,7 @@ const Profile = () => {
                   </h2>
                   <Form
                     layout="vertical"
-                    style={{ maxWidth: "800px",  }}
+                    style={{ maxWidth: "800px" }}
                     onFinish={submitForm}
                   >
                     <Row gutter={16}>

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Table, Input, Select, Button, Space, message } from "antd";
 import { EditOutlined } from "@ant-design/icons";
+import { Link } from 'react-router-dom';
+
 
 const { Option } = Select;
 
@@ -57,24 +59,6 @@ const Employees = () => {
     setSelectedType(value);
   };
 
-  // Force Logout
-  const handleForceLogout = (id) => {
-    axios
-      .put(`http://43.205.54.210:3001/addusers/${id}/forceLogout`)
-      .then((response) => {
-        message.success("User has been forcefully logged out");
-        setEmployees(employees.filter((emp) => emp._id !== id));  // Remove the user from the list
-        window.location.replace("/login"); // Redirect to the login page
-      })
-      .catch((error) => {
-        console.error("Error during force logout:", error);
-        message.error("Error logging out user");
-      });
-  };
-  
-  
-  
-  
   // Function to determine the status of the user (active or last login time)
   const handleStatus = (isUserLogin) => {
     return isUserLogin ? "Active Now" : "Not Active";
@@ -97,7 +81,6 @@ const Employees = () => {
       if (b.status === "Active Now" && a.status !== "Active Now") {
         return 1;
       }
-      // For other users, sort by last login time if needed (optional)
       return new Date(b.status) - new Date(a.status);
     })
     .map((employee, index) => ({
@@ -105,34 +88,70 @@ const Employees = () => {
       key: index + 1, // Update the serial number based on the sorted data
     }));
 
-  const columns = [
-    { title: "S.No", dataIndex: "key", key: "key" },
-    { title: "Username", dataIndex: "username", key: "username" },
-    { title: "Branch", dataIndex: "branch", key: "branch" },
-    { title: "Type", dataIndex: "type", key: "type" },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <span style={{ color: status === "Active Now" ? "green" : "red" }}>
-          {status}
-        </span>
-      ),
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <Space size="middle">
-          <Button type="link" icon={<EditOutlined />} />
-          <Button type="link" onClick={() => handleForceLogout(record.key)}>
-            Force Logout
-          </Button>
-        </Space>
-      ),
-    },
-  ];
+    
+
+    const handleForceLogout = (username) => {
+      axios
+        .put("http://43.205.54.210:3001/addusers/forceLogout", { username })
+        .then((response) => {
+          message.success(`${username} has been scheduled for forceful logout in 10 seconds`);
+    
+          // Optionally update the status in the UI for the admin immediately
+          setEmployees((prevEmployees) =>
+            prevEmployees.map((emp) =>
+              emp.username === username ? { ...emp, status: "Scheduled for Logout" } : emp
+            )
+          );
+    
+          // Set a timeout to refresh the employee list after 10 seconds
+          setTimeout(() => {
+            // Re-fetch employee data to update the status after forced logout
+            axios.get("http://43.205.54.210:3001/addusers").then((response) => {
+              setEmployees(response.data);
+            }).catch((error) => {
+              console.error("Error fetching updated employee data:", error);
+            });
+          }, 10000); // 10 seconds
+        })
+        .catch((error) => {
+          console.error("Error during force logout:", error);
+          message.error("Error logging out user");
+        });
+    };
+    
+  
+
+    const columns = [
+      { title: "S.No", dataIndex: "key", key: "key" },
+      { title: "Username", dataIndex: "username", key: "username" },
+      { title: "Branch", dataIndex: "branch", key: "branch" },
+      { title: "Type", dataIndex: "type", key: "type" },
+      {
+        title: "Status",
+        dataIndex: "status",
+        key: "status",
+        render: (status) => (
+          <span style={{ color: status === "Active Now" ? "green" : "red" }}>
+            {status}
+          </span>
+        ),
+      },
+      {
+        title: "Action",
+        key: "action",
+        render: (_, record) => (
+          <Space size="middle">
+            <Link to={`/profile/edit-profile/${record.username}`}>
+              <Button type="link" icon={<EditOutlined />} />
+            </Link>
+            <Button type="link" onClick={() => handleForceLogout(record.username)}>
+              Force Logout
+            </Button>
+          </Space>
+        ),
+      },
+    ];
+
 
   return (
     <div>

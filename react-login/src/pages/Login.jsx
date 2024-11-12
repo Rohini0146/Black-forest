@@ -20,16 +20,15 @@ const Login = () => {
   
       if (response.status === 200 && response.data === "Login Successful") {
         const user = await axios.get(`http://43.205.54.210:3001/getUserByUsername/${values.username}`);
-        
-        // Check if the user is force-logged-out
-        if (user.data.forceLogout) {
-          alert("Your account has been forcefully logged out. Please contact admin.");
-          return;
-        }
-  
         localStorage.setItem("role", user.data.type);
         localStorage.setItem("access", JSON.stringify(user.data.access));
         localStorage.setItem("username", values.username);
+        
+        // Set a timeout to automatically logout after 10 hours (36000000 ms)
+        setTimeout(() => {
+          alert("Session has expired. Please log in again.");
+          navigate("/login");
+        }, 36000000); // 10 hours in milliseconds
   
         alert("Login Successful!");
         navigate("/profile");
@@ -41,6 +40,7 @@ const Login = () => {
       alert("An error occurred. Please try again.");
     }
   };
+  
   
 
   return (

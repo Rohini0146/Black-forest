@@ -37,6 +37,8 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
+
+//stockuser
 app.post("/adduser", async (req, res) => {
   try {
     const newUser = new AddUser(req.body);
@@ -74,7 +76,11 @@ app.get("/addusers", async (req, res) => {
 app.put("/addusers/:id/forceLogout", async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedEmployee = await AddUser.findByIdAndUpdate(id, { forceLogout: true }, { new: true });
+    const updatedEmployee = await AddUser.findByIdAndUpdate(
+      id,
+      { forceLogout: true },
+      { new: true }
+    );
 
     if (!updatedEmployee) {
       return res.status(404).json({ message: "User not found" });
@@ -87,9 +93,7 @@ app.put("/addusers/:id/forceLogout", async (req, res) => {
   }
 });
 
-
 // API Routes
-// Login endpoint
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -97,14 +101,22 @@ app.post("/login", async (req, res) => {
     const user = await AddUser.findOne({ username, password });
 
     if (user) {
-      // If the user is force-logged-out, prevent login
+      // Prevent login if the user is forcefully logged out
       if (user.isForceLogout) {
-        return res.status(403).json({ message: "Your account has been forcefully logged out. Please contact admin." });
+        return res.status(403).json({
+          message: "Your account has been forcefully logged out. Please contact admin.",
+        });
       }
 
       // Set isUserLogin to true when user logs in
       user.isUserLogin = true;
       user.lastLogin = new Date();
+      
+      // Set session expiry time to 10 hours from now
+      const sessionExpiryTime = new Date();
+      sessionExpiryTime.setHours(sessionExpiryTime.getHours() + 10);
+      user.sessionExpiresAt = sessionExpiryTime;
+
       await user.save(); // Save the updated user data
 
       res.status(200).json("Login Successful");
@@ -117,10 +129,42 @@ app.post("/login", async (req, res) => {
   }
 });
 
+const sessionExpiryCheck = async (req, res, next) => {
+  try {
+    const username = req.body.username || req.query.username || req.params.username;
 
+    const user = await AddUser.findOne({ username });
+
+    if (!user || !user.isUserLogin) {
+      return res.status(401).json({ message: "User is not logged in." });
+    }
+
+    const currentTime = new Date();
+    if (user.sessionExpiresAt && currentTime > user.sessionExpiresAt) {
+      // Session has expired, log out the user
+      user.isUserLogin = false;
+      user.sessionExpiresAt = null; // Clear session expiry
+      await user.save();
+      console.log(`User ${username} has been automatically logged out due to session expiration.`);
+      return res.status(401).json({ message: "Session has expired. Please log in again." });
+    }
+
+    next(); // Continue to the next middleware or route
+  } catch (error) {
+    console.error("Session check error:", error);
+    res.status(500).json({ message: "Error checking session" });
+  }
+};
+
+app.get("/profile", sessionExpiryCheck, async (req, res) => {
+  const { username } = req.query;
+  const user = await AddUser.findOne({ username });
+  res.status(200).json({ profile: user });
+});
 
 
 // Logout endpoint (can be called when the user logs out normally)
+// Logout route for manual logout
 app.post("/logout", async (req, res) => {
   try {
     const { username } = req.body;
@@ -128,9 +172,10 @@ app.post("/logout", async (req, res) => {
     const user = await AddUser.findOne({ username });
 
     if (user) {
-      // Set isUserLogin to false when the user logs out manually
+      // Set isUserLogin to false and clear session expiry on manual logout
       user.isUserLogin = false;
-      await user.save(); // Save the updated user data
+      user.sessionExpiresAt = null;
+      await user.save();
 
       res.status(200).json({ message: "User logged out successfully" });
     } else {
@@ -142,36 +187,111 @@ app.post("/logout", async (req, res) => {
   }
 });
 
-
-
-// Force logout endpoint
-app.put("/addusers/:id/forceLogout", async (req, res) => {
+// Force logout route for admin-initiated logout with timer
+app.put("/addusers/forceLogout", async (req, res) => {
   try {
-    const { id } = req.params;
-    console.log(`Force logout triggered for user with ID: ${id}`);  // Log the user ID for debugging
+    const { username } = req.body;
+    const adminUsername = req.user?.username; // Assuming `req.user` contains the admin info
 
-    // Update the user to set `isUserLogin` to false and `isForceLogout` to true
-    const updatedEmployee = await AddUser.findByIdAndUpdate(
-      id, 
-      { isUserLogin: false, isForceLogout: true }, 
-      { new: true }
-    );
+    console.log(`Force logout triggered for user: ${username}`);
 
-    if (!updatedEmployee) {
-      console.log("User not found");  // Log if user is not found
+    // Prevent the admin from logging out their own session
+    if (adminUsername === username) {
+      return res
+        .status(403)
+        .json({ message: "Admin cannot force logout their own session." });
+    }
+
+    const user = await AddUser.findOne({ username });
+    if (!user) {
+      console.log("User not found");
       return res.status(404).json({ message: "User not found" });
     }
 
-    console.log("Force Logout Success:", updatedEmployee);  // Log success details
+    // Set the session to expire in 10 seconds
+    const sessionExpiryTime = new Date();
+    sessionExpiryTime.setSeconds(sessionExpiryTime.getSeconds() + 10); // 10 seconds
+    user.isUserLogin = true; // Set as logged in to trigger automatic logout after expiration
+    user.sessionExpiresAt = sessionExpiryTime;
+    user.isForceLogout = true; // Track that this logout was forced
 
-    res.status(200).json({ message: "User has been forcefully logged out" });
+    await user.save();
+    console.log(`User ${username} will be forcefully logged out after 10 seconds.`);
+    
+    res.status(200).json({ message: "User has been scheduled for forceful logout." });
   } catch (error) {
-    console.error("Error during force logout:", error);  // Log the full error
+    console.error("Error during force logout:", error);
     res.status(500).json({ message: "Error logging out user" });
   }
 });
 
 
+
+// Update user details by username (or by ID)
+app.put("/addusers/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+    const updateFields = req.body;
+
+    // Handle the access array update separately to prevent overwriting
+    const accessUpdate = {};
+    if (updateFields.access && Array.isArray(updateFields.access)) {
+      const cleanedAccess = updateFields.access.filter((item) => item !== "");
+      accessUpdate.$set = { access: cleanedAccess }; // Ensure access is replaced only if updated
+      delete updateFields.access;
+    }
+
+    // Combine field updates with access updates, if present
+    const updatedUser = await AddUser.findOneAndUpdate(
+      { username },
+      { $set: updateFields, ...accessUpdate },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "User profile updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ message: "Error updating user" });
+  }
+});
+
+// Get user access data
+app.get("/addusers/:username/access", async (req, res) => {
+  try {
+    const { username } = req.params;
+    const user = await AddUser.findOne({ username }, "access");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ access: user.access });
+  } catch (error) {
+    console.error("Error fetching access data:", error);
+    res.status(500).json({ message: "Error fetching access data" });
+  }
+});
+
+// Get user details by username
+app.get("/addusers/:username", async (req, res) => {
+  try {
+    const user = await AddUser.findOne({ username: req.params.username });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Error fetching user" });
+  }
+});
 
 // API to fetch user details by username (for access and role after login)
 app.get("/getUserByUsername/:username", async (req, res) => {
@@ -215,6 +335,7 @@ app.post("/order", async (req, res) => {
 });
 
 // server.js
+
 app.get("/orders", async (req, res) => {
   const limit = parseInt(req.query.limit) || undefined;
   const startDate = req.query.startDate;

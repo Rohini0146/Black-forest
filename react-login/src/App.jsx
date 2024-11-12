@@ -13,8 +13,10 @@ import StockOrder from "./pages/StockOrder";
 import Dashboard from "./pages/Dashboard";
 import "./App.css";
 import Employees from "./pages/Employees";
+import EditProfile from "./pages/EditProfile";
 
 function App() {
+  
   const [userAccess, setUserAccess] = useState([]);
   const isSuperAdmin = localStorage.getItem("role") === "superadmin";
 
@@ -60,6 +62,10 @@ function App() {
           )}
            {(isSuperAdmin || userAccess.includes("stock-order")) && (
             <Route path="stock-order" element={<StockOrder />} />
+          )}
+           {/* Add the Edit Profile route */}
+           {(isSuperAdmin || userAccess.includes("edit-profile")) && (
+            <Route path="/profile/edit-profile/:username" element={<EditProfile />} />
           )}
         </Route>
 
