@@ -94,6 +94,9 @@ app.put("/addusers/:id/forceLogout", async (req, res) => {
 });
 
 // API Routes
+// app.post("/login") route without session expiry logic
+// POST /login - Login route with session expiration time
+// POST /login - Login route with session expiration time
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -108,17 +111,18 @@ app.post("/login", async (req, res) => {
         });
       }
 
-      // Set isUserLogin to true when user logs in
+      // Set isUserLogin to true when the user logs in
       user.isUserLogin = true;
       user.lastLogin = new Date();
-      
-      // Set session expiry time to 10 hours from now
+
+      // Set session expiry to 10 seconds
       const sessionExpiryTime = new Date();
-      sessionExpiryTime.setHours(sessionExpiryTime.getHours() + 10);
+      sessionExpiryTime.setSeconds(sessionExpiryTime.getSeconds() + 10); // Set expiry to 10 seconds
       user.sessionExpiresAt = sessionExpiryTime;
 
       await user.save(); // Save the updated user data
 
+      // Return user details with access levels
       res.status(200).json("Login Successful");
     } else {
       res.status(401).json({ message: "Invalid username or password. Please try again." });
@@ -129,38 +133,45 @@ app.post("/login", async (req, res) => {
   }
 });
 
-const sessionExpiryCheck = async (req, res, next) => {
-  try {
-    const username = req.body.username || req.query.username || req.params.username;
 
+
+// Middleware to check session expiry
+// Middleware to check session expiry
+const checkSessionExpiry = async (req, res, next) => {
+  const { username } = req.body;
+
+  try {
     const user = await AddUser.findOne({ username });
 
-    if (!user || !user.isUserLogin) {
-      return res.status(401).json({ message: "User is not logged in." });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const currentTime = new Date();
-    if (user.sessionExpiresAt && currentTime > user.sessionExpiresAt) {
-      // Session has expired, log out the user
+    // Check if the user is force-logged out or session expired
+    if (user.isForceLogout || (user.sessionExpiresAt && new Date() > new Date(user.sessionExpiresAt))) {
+      // Session has expired, force logout
       user.isUserLogin = false;
-      user.sessionExpiresAt = null; // Clear session expiry
-      await user.save();
-      console.log(`User ${username} has been automatically logged out due to session expiration.`);
-      return res.status(401).json({ message: "Session has expired. Please log in again." });
+      user.sessionExpiresAt = null; // Clear session expiry time
+      await user.save(); // Save the updated user data
+
+      return res.status(401).json({ message: "Session expired. Please log in again." });
     }
 
-    next(); // Continue to the next middleware or route
+    // If the session is still valid, continue to the route
+    next();
   } catch (error) {
-    console.error("Session check error:", error);
+    console.error("Error checking session:", error);
     res.status(500).json({ message: "Error checking session" });
   }
 };
 
-app.get("/profile", sessionExpiryCheck, async (req, res) => {
-  const { username } = req.query;
-  const user = await AddUser.findOne({ username });
-  res.status(200).json({ profile: user });
+
+// Example of applying the session expiry check
+app.get("/some-protected-route", checkSessionExpiry, (req, res) => {
+  res.status(200).json({ message: "You have access to this protected route." });
 });
+
+
 
 
 // Logout endpoint (can be called when the user logs out normally)
@@ -190,40 +201,30 @@ app.post("/logout", async (req, res) => {
 // Force logout route for admin-initiated logout with timer
 app.put("/addusers/forceLogout", async (req, res) => {
   try {
-    const { username } = req.body;
-    const adminUsername = req.user?.username; // Assuming `req.user` contains the admin info
+    const { username } = req.body;  // Receiving username in the request body
 
-    console.log(`Force logout triggered for user: ${username}`);
-
-    // Prevent the admin from logging out their own session
-    if (adminUsername === username) {
-      return res
-        .status(403)
-        .json({ message: "Admin cannot force logout their own session." });
-    }
-
+    // Find the user by username
     const user = await AddUser.findOne({ username });
+
     if (!user) {
-      console.log("User not found");
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Set the session to expire in 10 seconds
-    const sessionExpiryTime = new Date();
-    sessionExpiryTime.setSeconds(sessionExpiryTime.getSeconds() + 10); // 10 seconds
-    user.isUserLogin = true; // Set as logged in to trigger automatic logout after expiration
-    user.sessionExpiresAt = sessionExpiryTime;
-    user.isForceLogout = true; // Track that this logout was forced
+    // Mark user as logged out and force logout
+    user.isUserLogin = false;         // Mark user as logged out
+    user.isForceLogout = true;        // Set flag to true indicating forced logout
+    user.sessionExpiresAt = null;     // If using sessions, clear session expiry time
 
     await user.save();
-    console.log(`User ${username} will be forcefully logged out after 10 seconds.`);
-    
-    res.status(200).json({ message: "User has been scheduled for forceful logout." });
+    console.log(`User ${username} has been forcefully logged out`);
+
+    res.status(200).json({ message: "User has been forcefully logged out." });
   } catch (error) {
     console.error("Error during force logout:", error);
     res.status(500).json({ message: "Error logging out user" });
   }
 });
+
 
 
 

@@ -90,6 +90,7 @@ const Profile = () => {
     "customer-analysis": <LineChartOutlined />, // Replace with the appropriate icon
     logs: <UserOutlined />, // Replace with the appropriate icon
   };
+  
 
   // Fetch stores from the database
   const fetchStores = async () => {
@@ -140,20 +141,22 @@ const Profile = () => {
       const response = await axios.post("http://43.205.54.210:3001/logout", {
         username: localStorage.getItem("username"), // Send the current username
       });
-
+  
       if (response.status === 200) {
+        // Clear all localStorage items related to the current session
         localStorage.removeItem("role");
         localStorage.removeItem("access");
         localStorage.removeItem("username");
-
-        // Redirect to login page
-        navigate("/login");
+  
+        // Redirect to login page and replace the current page in history
+        navigate("/login", { replace: true });
       }
     } catch (error) {
       console.error("Logout error:", error);
       alert("An error occurred during logout. Please try again.");
     }
   };
+  
 
   // User dropdown menu for settings and logout
   const userMenu = (
@@ -274,9 +277,9 @@ const Profile = () => {
                 <div className="profile-welcome">
                   <h1>Hello Admin</h1>
                   <p>
-                    "Welcome, Admin! Use this page to create and manage user
+                    Welcome, Admin! Use this page to create and manage user
                     profiles, ensuring every customer has a smooth experience
-                    with Black Forest Cake."
+                    with Black Forest Cake.
                   </p>
                 </div>
                 <div className="profile-form">

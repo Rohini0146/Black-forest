@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Form, Input, Button, Tabs } from "antd";
@@ -11,37 +11,59 @@ const { TabPane } = Tabs;
 const Login = () => {
   const navigate = useNavigate();
 
-  const handleLoginSubmit = async (values) => {
-    try {
-      const response = await axios.post("http://43.205.54.210:3001/login", {
-        username: values.username,
-        password: values.password,
-      });
-  
-      if (response.status === 200 && response.data === "Login Successful") {
-        const user = await axios.get(`http://43.205.54.210:3001/getUserByUsername/${values.username}`);
-        localStorage.setItem("role", user.data.type);
-        localStorage.setItem("access", JSON.stringify(user.data.access));
-        localStorage.setItem("username", values.username);
-        
-        // Set a timeout to automatically logout after 10 hours (36000000 ms)
-        setTimeout(() => {
-          alert("Session has expired. Please log in again.");
-          navigate("/login");
-        }, 36000000); // 10 hours in milliseconds
-  
-        alert("Login Successful!");
-        navigate("/profile");
-      } else {
-        alert(response.data || "Login failed. Please try again.");
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      alert("An error occurred. Please try again.");
+  useEffect(() => {
+    // Check if the user is already logged in
+    const isLoggedIn = localStorage.getItem("username");
+    if (isLoggedIn) {
+      // If already logged in, redirect to profile
+      navigate("/profile");
     }
-  };
-  
-  
+
+    // Disable back/forward navigation on login page
+    window.history.pushState(null, "", window.location.href);
+    window.onpopstate = function () {
+      window.history.pushState(null, "", window.location.href);
+    };
+
+    // Cleanup the popstate when component unmounts
+    return () => {
+      window.onpopstate = null;
+    };
+  }, [navigate]);
+
+  const handleLoginSubmit = async (values) => {
+  try {
+    const response = await axios.post("http://43.205.54.210:3001/login", {
+      username: values.username,
+      password: values.password,
+    });
+
+    if (response.status === 200 && response.data === "Login Successful") {
+      const user = await axios.get(
+        `http://43.205.54.210:3001/getUserByUsername/${values.username}`
+      );
+      const accessList = user.data.access || [];
+      localStorage.setItem("role", user.data.type);
+      localStorage.setItem("access", JSON.stringify(accessList));
+      localStorage.setItem("username", values.username);
+
+      alert("Login Successful!");
+
+      // Redirect to the first accessible page from the list
+      if (accessList.length > 0) {
+        navigate(`/profile/${accessList[0]}`);
+      } else {
+        navigate("/profile");  // Default route if no access
+      }
+    } else {
+      alert(response.data || "Login failed. Please try again.");
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    alert("An error occurred. Please try again.");
+  }
+};
+
 
   return (
     <div className="login-page">

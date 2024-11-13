@@ -1,0 +1,14 @@
+
+
+@media(max-width:768px) {
+    .emp-search{
+        width: fit-content !important;
+        margin-bottom: 10px !important;
+    }
+    .emp-filter {
+        width: 215px !important;
+    }
+    .emp-page{
+        padding: 0 10px;
+    }
+}

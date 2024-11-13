@@ -14,6 +14,17 @@ import Dashboard from "./pages/Dashboard";
 import "./App.css";
 import Employees from "./pages/Employees";
 import EditProfile from "./pages/EditProfile";
+import AutoLogoutRedirect from "./pages/AutoLogoutRedirect";
+
+const ProtectedRoute = ({ children }) => {
+  const isLoggedIn = localStorage.getItem("username");
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
 
 function App() {
   
@@ -27,13 +38,15 @@ function App() {
 
   return (
     <Router>
+      <AutoLogoutRedirect />
       <Routes>
+        {/* Redirect to login page if user is not logged in */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Profile as Main Page */}
-        <Route path="/profile" element={<Profile />}>
-        {(isSuperAdmin || userAccess.includes("dashboard")) && (
+        {/* Protected Routes for logged-in users */}
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>}>
+          {(isSuperAdmin || userAccess.includes("dashboard")) && (
             <Route path="dashboard" element={<Dashboard />} />
           )}
           {(isSuperAdmin || userAccess.includes("customer-information")) && (
@@ -60,16 +73,15 @@ function App() {
           {(isSuperAdmin || userAccess.includes("return-order")) && (
             <Route path="return-order" element={<ReturnOrder />} />
           )}
-           {(isSuperAdmin || userAccess.includes("stock-order")) && (
+          {(isSuperAdmin || userAccess.includes("stock-order")) && (
             <Route path="stock-order" element={<StockOrder />} />
           )}
-           {/* Add the Edit Profile route */}
-           {(isSuperAdmin || userAccess.includes("edit-profile")) && (
+          {(isSuperAdmin || userAccess.includes("edit-profile")) && (
             <Route path="/profile/edit-profile/:username" element={<EditProfile />} />
           )}
         </Route>
 
-        {/* Redirect to Profile as a fallback */}
+        {/* Catch-all route for undefined paths */}
         <Route path="*" element={<Navigate to="/profile" replace />} />
       </Routes>
     </Router>
