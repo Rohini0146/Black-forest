@@ -150,7 +150,7 @@ const EditProfile = () => {
       );
 
       message.success("Profile updated successfully!");
-      navigate(`/profile/edit-profile/${username}`);
+      navigate(`/dashboard/employees`);
     } catch (error) {
       message.error("Error updating profile. Please try again.");
       console.error(error);

@@ -7,6 +7,10 @@ const OrderModel = require("./models/Orders");
 const stores = require("./models/Stores");
 const status = require("./models/OrderStatus");
 const AddUser = require("./models/AddUser");
+const ProductCategory = require("./models/ProductCategories");
+const Pastry  = require("./models/Pastries");
+const PlaceOrder = require("./models/PlaceOrder");
+
 require("dotenv").config();
 
 const app = express();
@@ -135,44 +139,6 @@ app.post("/login", async (req, res) => {
 
 
 
-// Middleware to check session expiry
-// Middleware to check session expiry
-const checkSessionExpiry = async (req, res, next) => {
-  const { username } = req.body;
-
-  try {
-    const user = await AddUser.findOne({ username });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Check if the user is force-logged out or session expired
-    if (user.isForceLogout || (user.sessionExpiresAt && new Date() > new Date(user.sessionExpiresAt))) {
-      // Session has expired, force logout
-      user.isUserLogin = false;
-      user.sessionExpiresAt = null; // Clear session expiry time
-      await user.save(); // Save the updated user data
-
-      return res.status(401).json({ message: "Session expired. Please log in again." });
-    }
-
-    // If the session is still valid, continue to the route
-    next();
-  } catch (error) {
-    console.error("Error checking session:", error);
-    res.status(500).json({ message: "Error checking session" });
-  }
-};
-
-
-// Example of applying the session expiry check
-app.get("/some-protected-route", checkSessionExpiry, (req, res) => {
-  res.status(200).json({ message: "You have access to this protected route." });
-});
-
-
-
 
 // Logout endpoint (can be called when the user logs out normally)
 // Logout route for manual logout
@@ -293,6 +259,63 @@ app.get("/addusers/:username", async (req, res) => {
     res.status(500).json({ message: "Error fetching user" });
   }
 });
+
+
+app.get("/productcategories", async (req, res) => {
+  try {
+    const productcategoriesList = await ProductCategory.find().sort({ created_at: -1 });
+    res.json(productcategoriesList);
+  } catch (error) {
+    console.error("Error fetching product categories:", error);
+    res.status(500).json({ error: "Failed to fetch product categories" });
+  }
+});
+
+app.get("/pastries", async (req, res) => {
+  try {
+    const pastriesList = await Pastry.find().populate('category').sort({ created_at: -1 });
+    res.json(pastriesList);
+  } catch (error) {
+    console.error("Error fetching pastries:", error);
+    res.status(500).json({ error: "Failed to fetch pastries" });
+  }
+});
+
+
+
+app.post("/placeorders", async (req, res) => {
+  console.log("Received order data:", req.body); // Debugging line
+  try {
+    const { products, totalAmount, isStockOrder, deliveryDate, deliveryTime } = req.body;
+
+    const newOrder = new PlaceOrder({
+      products,
+      totalAmount,
+      isStockOrder,
+      deliveryDate,
+      deliveryTime,
+    });
+
+    await newOrder.save();
+    res.status(201).json({ message: "Order placed successfully" });
+  } catch (error) {
+    console.error("Error placing order:", error);
+    res.status(500).json({ error: "Failed to place order" });
+  }
+});
+
+
+// Route to get all orders (GET)
+app.get("/placeorders", async (req, res) => {
+  try {
+    const placeorders = await PlaceOrder.find().sort({ createdAt: -1 });
+    res.json(placeorders);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
+});
+
 
 // API to fetch user details by username (for access and role after login)
 app.get("/getUserByUsername/:username", async (req, res) => {

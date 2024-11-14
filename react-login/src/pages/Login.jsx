@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Form, Input, Button, Tabs } from "antd";
+import { Form, Input, Button, Tabs, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import logo from "../images/Logo-bk.png";
 import "./LoginSignup.css";
@@ -10,60 +10,89 @@ const { TabPane } = Tabs;
 
 const Login = () => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Check if the user is already logged in
-    const isLoggedIn = localStorage.getItem("username");
-    if (isLoggedIn) {
-      // If already logged in, redirect to profile
-      navigate("/profile");
+    // Check if user is already logged in by verifying both username and role
+    const username = localStorage.getItem("username");
+    const role = localStorage.getItem("role");
+
+    if (username && role) {
+      navigate("/dashboard"); // Redirect directly if logged in
     }
 
-    // Disable back/forward navigation on login page
+    // Prevent back navigation to login page after successful login
     window.history.pushState(null, "", window.location.href);
     window.onpopstate = function () {
       window.history.pushState(null, "", window.location.href);
     };
 
-    // Cleanup the popstate when component unmounts
     return () => {
       window.onpopstate = null;
     };
   }, [navigate]);
 
   const handleLoginSubmit = async (values) => {
-  try {
-    const response = await axios.post("http://43.205.54.210:3001/login", {
-      username: values.username,
-      password: values.password,
-    });
+    setIsLoading(true);
 
-    if (response.status === 200 && response.data === "Login Successful") {
-      const user = await axios.get(
-        `http://43.205.54.210:3001/getUserByUsername/${values.username}`
-      );
-      const accessList = user.data.access || [];
-      localStorage.setItem("role", user.data.type);
-      localStorage.setItem("access", JSON.stringify(accessList));
-      localStorage.setItem("username", values.username);
+    try {
+      const response = await axios.post("http://43.205.54.210:3001/login", {
+        username: values.username,
+        password: values.password,
+      });
 
-      alert("Login Successful!");
+      if (response.status === 200 && response.data === "Login Successful") {
+        const user = await axios.get(
+          `http://43.205.54.210:3001/getUserByUsername/${values.username}`
+        );
+        const accessList = user.data.access || [];
+        localStorage.setItem("role", user.data.type);
+        localStorage.setItem("access", JSON.stringify(accessList));
+        localStorage.setItem("username", values.username);
+  
+        alert("Login Successful!");
 
-      // Redirect to the first accessible page from the list
-      if (accessList.length > 0) {
-        navigate(`/profile/${accessList[0]}`);
+        // Define the route mappings for each access type
+        const accessRoutes = {
+          "dashboard": "/dashboard",
+          "profile": "/dashboard/profile",
+          "customer-information": "/dashboard/customer-information",
+          "order-information": "/dashboard/order-information",
+          "order-history": "/dashboard/order-history",
+          "product-information": "/dashboard/product-information",
+          "payment-information": "/dashboard/payment-information",
+          "sales-person": "/dashboard/sales-person",
+          "customer-analysis": "/dashboard/customer-analysis",
+          "logs": "/dashboard/logs",
+          "branch-order": "/dashboard/branch-order",
+          "live-branch-order": "/dashboard/live-branch-order",
+          "return-order": "/dashboard/return-order",
+          "stock-order": "/dashboard/stock-order",
+          "employees": "/dashboard/employees",
+          "edit-profile": "/dashboard/edit-profile",
+        };
+
+        // Redirect to the first accessible page from the access list
+        if (accessList.length > 0) {
+          const firstAccessPage = accessList.find(access => accessRoutes[access]);
+          if (firstAccessPage) {
+            navigate(accessRoutes[firstAccessPage]);
+          } else {
+            navigate("/dashboard"); // Default route if no mapped access is found
+          }
+        } else {
+          navigate("/dashboard"); // Default route if no access
+        }
       } else {
-        navigate("/profile");  // Default route if no access
+        message.error(response.data || "Login failed. Please try again.");
       }
-    } else {
-      alert(response.data || "Login failed. Please try again.");
+    } catch (error) {
+      console.error("Login error:", error);
+      message.error("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error("Login error:", error);
-    alert("An error occurred. Please try again.");
-  }
-};
-
+  };
 
   return (
     <div className="login-page">
@@ -99,6 +128,7 @@ const Login = () => {
                   <Button
                     type="primary"
                     htmlType="submit"
+                    loading={isLoading}
                     style={{ width: "100%", borderRadius: "5px", backgroundColor: "#1890ff" }}
                   >
                     Sign In

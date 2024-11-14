@@ -141,7 +141,7 @@ const Employees = () => {
       key: "action",
       render: (_, record) => (
         <Space size="middle">
-          <Link to={`/profile/edit-profile/${record.username}`}>
+          <Link to={`/dashboard/edit-profile/${record.username}`}>
             <Button type="link" icon={<EditOutlined />} />
           </Link>
           <Button
