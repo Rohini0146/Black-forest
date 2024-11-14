@@ -2,49 +2,23 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const AutoLogoutRedirect = () => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  // Timer reference
-  let logoutTimer = null;
+    useEffect(() => {
+        const checkSession = async () => {
+            // Replace with your actual API call or session validation logic
+            const response = await fetch("/api/check-session");
+            if (!response.ok) {
+                navigate("/login"); // Redirect to login if session is invalid
+            }
+        };
 
-  // Function to start/reset the timer
-  const startLogoutTimer = () => {
-    // Clear any existing timer
-    if (logoutTimer) {
-      clearTimeout(logoutTimer);
-    }
+        const intervalId = setInterval(checkSession, 10000); // Check every 10 seconds
 
-    // Set a new timer for auto logout after 10 seconds of inactivity
-    logoutTimer = setTimeout(() => {
-      localStorage.clear(); // Clear localStorage to simulate logout
-      navigate("/login"); // Redirect to the login page
-    }, 180000); // 10 seconds of inactivity
-  };
+        return () => clearInterval(intervalId); // Cleanup on unmount
+    }, [navigate]);
 
-  useEffect(() => {
-    // Start the initial 10-second logout timer
-    startLogoutTimer();
-
-    // Event listener for activity (mouse move, key press, clicks)
-    const resetTimerOnActivity = () => {
-      startLogoutTimer(); // Reset the logout timer to 10 seconds on activity
-    };
-
-    // Attach event listeners to detect activity
-    window.addEventListener("mousemove", resetTimerOnActivity);
-    window.addEventListener("keydown", resetTimerOnActivity);
-    window.addEventListener("click", resetTimerOnActivity);  // Add click event
-
-    // Cleanup on component unmount
-    return () => {
-      clearTimeout(logoutTimer); // Clear the timer
-      window.removeEventListener("mousemove", resetTimerOnActivity);
-      window.removeEventListener("keydown", resetTimerOnActivity);
-      window.removeEventListener("click", resetTimerOnActivity); // Clean up click event
-    };
-  }, [navigate]);
-
-  return null; // This component doesn't need to render anything
+    return null; // This component does not render anything
 };
 
 export default AutoLogoutRedirect;

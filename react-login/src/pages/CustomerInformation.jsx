@@ -141,7 +141,7 @@ const CustomerInformation = () => {
     setLoading(true);
     try {
       const dateField =
-        filterType === "birthdayDate" ? "birthday_date" : "created_at";
+        filterType === "deliveryDate" ? "delivery_date" : "created_at";
       let url = `http://43.205.54.210:3001/orders?startDate=${startDate}&endDate=${endDate}&dateField=${dateField}`;
 
       if (responseType !== "Show All") {
@@ -153,8 +153,8 @@ const CustomerInformation = () => {
 
       const filteredData = orders.filter((order) => {
         const dateValue =
-          filterType === "birthdayDate"
-            ? order.birthday_date
+          filterType === "deliveryDate"
+            ? order.delivery_date
             : order.created_at;
         return (
           dateValue &&
@@ -258,9 +258,9 @@ const CustomerInformation = () => {
     { title: "Cake Model", dataIndex: "cake_model", key: "cake_model" },
     { title: "Price", dataIndex: "amount", key: "amount" },
     {
-      title: "Birthday Date",
-      dataIndex: "birthday_date",
-      key: "birthday_date",
+      title: "Delivery Date",
+      dataIndex: "delivery_date",
+      key: "delivery_date",
       render: (date) => (date ? moment(date).format("DD/MM/YYYY") : "N/A"),
     },
     {
@@ -322,7 +322,7 @@ const CustomerInformation = () => {
             style={{ width: 150, marginRight: 10 }}
           >
             <Option value="orderDate">Order Date</Option>
-            <Option value="birthdayDate">Birthday Date</Option>
+            <Option value="deliveryDate">Delivery Date</Option>
           </Select>
           <RangePicker value={dateRange} onChange={handleRangeChange} />
         </div>
