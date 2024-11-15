@@ -17,6 +17,8 @@ import EditProfile from './pages/EditProfile';
 import './App.css';
 import Profile from './pages/Profile';
 import AutoLogoutRedirect from "./pages/AutoLogoutRedirect";
+import Cart from './pages/Cart';
+import BranchView from './pages/BranchView';
 
 const ProtectedRoute = ({ children }) => {
   const isLoggedIn = localStorage.getItem("username") && localStorage.getItem("role");
@@ -51,6 +53,8 @@ function App() {
             <Route path='profile' element={<Profile />} />
             <Route path="employees" element={<Employees />} />
             <Route path="edit-profile/:username" element={<EditProfile />} />
+            <Route path='cart' element={<Cart/>} />
+            <Route path='branch-view' element={<BranchView />} />
           </Route>
 
           {/* Standalone Route for Orders */}

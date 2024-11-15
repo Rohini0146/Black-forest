@@ -10,6 +10,7 @@ const AddUser = require("./models/AddUser");
 const ProductCategory = require("./models/ProductCategories");
 const Pastry  = require("./models/Pastries");
 const PlaceOrder = require("./models/PlaceOrder");
+const { v4: uuidv4 } = require('uuid');
 
 require("dotenv").config();
 
@@ -119,9 +120,9 @@ app.post("/login", async (req, res) => {
       user.isUserLogin = true;
       user.lastLogin = new Date();
 
-      // Set session expiry to 10 seconds
+      // Set session expiry to 10 minutes (as per usual practice)
       const sessionExpiryTime = new Date();
-      sessionExpiryTime.setSeconds(sessionExpiryTime.getSeconds() + 10); // Set expiry to 10 seconds
+      sessionExpiryTime.setMinutes(sessionExpiryTime.getMinutes() + 10); // Set expiry to 10 minutes
       user.sessionExpiresAt = sessionExpiryTime;
 
       await user.save(); // Save the updated user data
@@ -146,14 +147,16 @@ app.post("/logout", async (req, res) => {
   try {
     const { username } = req.body;
 
+    // Find the user in the database
     const user = await AddUser.findOne({ username });
 
     if (user) {
       // Set isUserLogin to false and clear session expiry on manual logout
       user.isUserLogin = false;
-      user.sessionExpiresAt = null;
-      await user.save();
+      user.sessionExpiresAt = null; // Optional: Clear session expiry if needed
+      await user.save(); // Save changes to the user
 
+      // Respond with success
       res.status(200).json({ message: "User logged out successfully" });
     } else {
       res.status(404).json({ message: "User not found" });
@@ -163,6 +166,7 @@ app.post("/logout", async (req, res) => {
     res.status(500).json({ message: "Error during logout" });
   }
 });
+
 
 // Force logout route for admin-initiated logout with timer
 app.put("/addusers/forceLogout", async (req, res) => {
@@ -283,20 +287,40 @@ app.get("/pastries", async (req, res) => {
 
 
 
-app.post("/placeorders", async (req, res) => {
-  console.log("Received order data:", req.body); // Debugging line
-  try {
-    const { products, totalAmount, isStockOrder, deliveryDate, deliveryTime } = req.body;
+// Backend to filter orders by orderedDate and deliveryDate
 
+app.post("/placeorders", async (req, res) => {
+  console.log("Received order data:", req.body); // Debugging line to see what data is received
+
+  try {
+    const { products, totalAmount, isStockOrder, deliveryDate, deliveryTime, branch } = req.body; // Include branch in destructuring
+
+    // Generate a unique orderId based on the timestamp
+    const orderId = `ORD-${new Date().getTime()}`;
+
+    // Add the generated orderId to each product
+    const updatedProducts = products.map((product) => ({
+      ...product,
+      orderId: orderId, // Assign the same orderId for all products in this order
+    }));
+
+    console.log("Updated Products with orderId:", updatedProducts); // Debugging line
+
+    // Create a new order with the branch information
     const newOrder = new PlaceOrder({
-      products,
+      orderId: orderId, // Use the timestamp-based orderId for the whole order
+      products: updatedProducts,
       totalAmount,
       isStockOrder,
       deliveryDate,
       deliveryTime,
+      branch, // Add branch field
     });
 
-    await newOrder.save();
+    await newOrder.save(); // Save the order to the database
+
+    console.log("Order saved successfully:", newOrder); // Debugging line to confirm that the order is saved
+
     res.status(201).json({ message: "Order placed successfully" });
   } catch (error) {
     console.error("Error placing order:", error);
@@ -305,16 +329,57 @@ app.post("/placeorders", async (req, res) => {
 });
 
 
+
+
+// Route to get all orders (GET)
 // Route to get all orders (GET)
 app.get("/placeorders", async (req, res) => {
   try {
-    const placeorders = await PlaceOrder.find().sort({ createdAt: -1 });
-    res.json(placeorders);
+    const { orderedDate, deliveryDate, branch } = req.query;
+
+    const filterQuery = {};
+
+    // Filter by ordered date (createdAt)
+    if (orderedDate) {
+      const startOfOrderedDate = new Date(orderedDate);
+      const endOfOrderedDate = new Date(startOfOrderedDate);
+      endOfOrderedDate.setDate(startOfOrderedDate.getDate() + 1);
+
+      filterQuery.createdAt = {
+        $gte: startOfOrderedDate,
+        $lt: endOfOrderedDate,
+      };
+    }
+
+    // Filter by delivery date
+    if (deliveryDate) {
+      const startOfDeliveryDate = new Date(deliveryDate);
+      const endOfDeliveryDate = new Date(startOfDeliveryDate);
+      endOfDeliveryDate.setDate(startOfDeliveryDate.getDate() + 1);
+
+      filterQuery.deliveryDate = {
+        $gte: startOfDeliveryDate,
+        $lt: endOfDeliveryDate,
+      };
+    }
+
+    // Filter by branch if provided
+    if (branch && branch !== "All") {
+      filterQuery.branch = branch;
+    }
+
+    // Fetch orders in descending order of createdAt
+    const orders = await PlaceOrder.find(filterQuery).sort({ createdAt: -1 });
+
+    res.status(200).json(orders);
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
+
+
+
 
 
 // API to fetch user details by username (for access and role after login)

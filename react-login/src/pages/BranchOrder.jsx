@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Layout, Input, Button, Checkbox, InputNumber } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined, HeartOutlined, HeartFilled } from "@ant-design/icons";
 import Slider from "react-slick";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import './BranchOrder.css'
+import "../pages/BranchOrder.css";
 
 const { Content } = Layout;
 
@@ -18,47 +18,42 @@ const BranchOrder = () => {
   const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const [categoryCounts, setCategoryCounts] = useState({});
   const [cart, setCart] = useState([]);
+  const [favourites, setFavourites] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Clear selected products and reset the cart if an order was completed
-    if (localStorage.getItem("orderCompleted") === "true") {
-      localStorage.removeItem("cart"); // Clear cart from localStorage
-      setCart([]); // Clear local cart state
-      localStorage.removeItem("orderCompleted"); // Reset order completed flag
-      setProducts((prevProducts) =>
-        prevProducts.map((product) => ({
-          ...product,
-          quantity: 0,
-        }))
-      ); // Reset product quantities
-    }
+    const savedFavourites =
+      JSON.parse(localStorage.getItem("favourites")) || [];
+    setFavourites(savedFavourites);
 
     fetchCategories();
-    fetchProducts();
+    fetchProducts(savedFavourites); // Pass saved favorites to initialize favorite status in products
   }, []);
 
   useEffect(() => {
-    // Save cart to localStorage whenever it changes
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart]);
-
+    // Save favourites to localStorage whenever it changes
+    localStorage.setItem("favourites", JSON.stringify(favourites));
+  }, [favourites]);
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://43.205.54.210:3001/productcategories");
+      const response = await axios.get(
+        "http://43.205.54.210:3001/productcategories"
+      );
       setCategories(response.data);
     } catch (error) {
       console.error("Failed to fetch categories:", error);
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (savedFavourites) => {
     try {
       const response = await axios.get("http://43.205.54.210:3001/pastries");
       const productsWithQuantity = response.data.map((product) => ({
         ...product,
         quantity: 0,
+        inStockQuantity: undefined, // Start as undefined
+        isFavourite: savedFavourites.some((fav) => fav._id === product._id),
       }));
       setProducts(productsWithQuantity);
       setFilteredProducts(productsWithQuantity);
@@ -67,6 +62,7 @@ const BranchOrder = () => {
       console.error("Failed to fetch products", error);
     }
   };
+  
 
   const calculateCategoryCounts = (products) => {
     const counts = {};
@@ -109,14 +105,20 @@ const BranchOrder = () => {
     setFilteredProducts(filtered);
   };
 
-  const updateStockQuantity = (productId, newQuantity) => {
-    setProducts((prevProducts) =>
-      prevProducts.map((product) =>
-        product._id === productId
-          ? { ...product, inStockQuantity: newQuantity }
-          : product
-      )
+  const toggleCartItem = (product) => {
+    const updatedCart = [...cart];
+    const productIndex = updatedCart.findIndex(
+      (item) => item._id === product._id
     );
+
+    if (productIndex !== -1) {
+      updatedCart.splice(productIndex, 1);
+    } else {
+      const currentProduct = products.find((item) => item._id === product._id);
+      updatedCart.push({ ...product, quantity: currentProduct.quantity });
+    }
+
+    setCart(updatedCart);
   };
 
   const handleQuantityChange = (productId, quantity) => {
@@ -126,6 +128,14 @@ const BranchOrder = () => {
         : product
     );
     setProducts(updatedProducts);
+
+    const updatedCart = cart.map((item) =>
+      item._id === productId
+        ? { ...item, quantity: Math.max(quantity, 0) }
+        : item
+    );
+    setCart(updatedCart);
+
     const updatedFilteredProducts = updatedProducts.filter((product) =>
       selectedCategoryName
         ? product.category && product.category.name === selectedCategoryName
@@ -134,38 +144,67 @@ const BranchOrder = () => {
     setFilteredProducts(updatedFilteredProducts);
   };
 
-  const toggleCartItem = (product) => {
-    const existingCart = JSON.parse(localStorage.getItem("cart")) || [];
-    const productIndex = existingCart.findIndex((item) => item._id === product._id);
+  const toggleFavourite = (product) => {
+    // Load existing favorites from localStorage
+    const existingFavourites =
+      JSON.parse(localStorage.getItem("favourites")) || [];
 
-    if (productIndex !== -1) {
-      existingCart[productIndex].quantity = product.quantity;
+    // Check if the product is already in favorites
+    const isFavourite = existingFavourites.some(
+      (fav) => fav._id === product._id
+    );
+
+    let updatedFavourites;
+
+    if (isFavourite) {
+      // If the product is already a favorite, remove it
+      updatedFavourites = existingFavourites.filter(
+        (fav) => fav._id !== product._id
+      );
     } else {
-      existingCart.push({ ...product, quantity: product.quantity });
+      // If the product is not a favorite, add it
+      updatedFavourites = [
+        ...existingFavourites,
+        { ...product, isFavourite: true },
+      ];
     }
 
-    setCart(existingCart);
-    localStorage.setItem("cart", JSON.stringify(existingCart));
-  };
+    // Update the state and localStorage
+    setFavourites(updatedFavourites);
+    localStorage.setItem("favourites", JSON.stringify(updatedFavourites));
 
-  const updateProductQuantities = (cartItems) => {
+    // Update the products list to reflect the change in favorite status
     setProducts((prevProducts) =>
-      prevProducts.map((product) => {
-        const cartItem = cartItems.find((item) => item._id === product._id);
-        return cartItem ? { ...product, quantity: cartItem.quantity } : product;
-      })
+      prevProducts.map((p) =>
+        p._id === product._id ? { ...p, isFavourite: !p.isFavourite } : p
+      )
+    );
+    setFilteredProducts((prevFilteredProducts) =>
+      prevFilteredProducts.map((p) =>
+        p._id === product._id ? { ...p, isFavourite: !p.isFavourite } : p
+      )
     );
   };
 
+  // Initial setup to load favorites from localStorage when the component mounts
+  useEffect(() => {
+    const savedFavourites =
+      JSON.parse(localStorage.getItem("favourites")) || [];
+    setFavourites(savedFavourites);
+
+    // Fetch categories and products with saved favorites applied
+    fetchCategories();
+    fetchProducts(savedFavourites); // Pass saved favourites to apply to products
+  }, []);
+
   const goToCartPage = () => {
-    navigate("/profile/cart", { state: { cartItems: cart } });
+    navigate("/dashboard/cart", { state: { cartItems: cart } });
   };
 
-  const handleOrderSuccess = () => {
-    localStorage.removeItem("cart"); // Clear cart
-    localStorage.setItem("orderCompleted", "true"); // Set order completed flag
-    setCart([]); // Clear cart state
-    fetchProducts(); // Reload products to reset the page
+  const goToFavouritesPage = () => {
+    navigate("/dashboard/favourites", {
+      state: { favouriteItems: favourites },
+    });
   };
 
   const sliderSettings = {
@@ -178,11 +217,39 @@ const BranchOrder = () => {
     dotsClass: "slick-dots custom-dots",
   };
 
+  const handleInStockChange = (productId, value) => {
+    const updatedProducts = products.map((product) =>
+      product._id === productId
+        ? { ...product, inStockQuantity: value } // Update value directly, even if it's 0
+        : product
+    );
+    setProducts(updatedProducts);
+  
+    const updatedFilteredProducts = updatedProducts.filter((product) =>
+      selectedCategoryName
+        ? product.category && product.category.name === selectedCategoryName
+        : true
+    );
+    setFilteredProducts(updatedFilteredProducts);
+  };
+  
+
   return (
     <Layout className="layout">
       <Content style={{ padding: "20px" }}>
-        <div className="create-order">
-          <h2>Create an Order</h2>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div className="create-order">
+            <h2>Create an Order</h2>
+          </div>
+          <div
+            onClick={goToFavouritesPage}
+            style={{
+              cursor: "pointer",
+              color: "red",
+            }}
+          >
+            <HeartFilled />
+          </div>
         </div>
         <Input
           className="search"
@@ -198,7 +265,11 @@ const BranchOrder = () => {
               <div key={category._id} className="category-card">
                 <Button
                   onClick={() => handleCategorySelect(category.name)}
-                  type={selectedCategoryName === category.name ? "primary" : "default"}
+                  type={
+                    selectedCategoryName === category.name
+                      ? "primary"
+                      : "default"
+                  }
                   style={{
                     width: "100%",
                     padding: "10px",
@@ -208,7 +279,10 @@ const BranchOrder = () => {
                   }}
                 >
                   <span>{category.name}</span>
-                  <span className="count-items" style={{ fontSize: "12px", color: "#888" }}>
+                  <span
+                    className="count-items"
+                    style={{ fontSize: "12px", color: "#888" }}
+                  >
                     {categoryCounts[category.name] || 0} items
                   </span>
                 </Button>
@@ -222,36 +296,137 @@ const BranchOrder = () => {
               filteredProducts.map((product) => (
                 <div
                   key={product._id}
-                  className={`product-card ${cart.some((item) => item._id === product._id) ? "selected" : ""}`}
+                  className={`product-card ${
+                    cart.some((item) => item._id === product._id)
+                      ? "selected"
+                      : ""
+                  }`}
                 >
                   <Checkbox
                     className="check-box"
                     onChange={() => toggleCartItem(product)}
                     checked={cart.some((item) => item._id === product._id)}
+                    disabled={
+                      product.inStockQuantity === undefined ||
+                      product.inStockQuantity === null
+                    } // Disable only if inStockQuantity is undefined or null
                   />
-                  <img src={product.image} alt={product.name} style={{ width: "100%", height: "150px" }} />
+
+                  <div
+                    className="fav"
+                    onClick={() => toggleFavourite(product)}
+                    style={{
+                      cursor: "pointer",
+                      color: product.isFavourite ? "red" : "grey",
+                    }}
+                  >
+                    {product.isFavourite ? <HeartFilled /> : <HeartOutlined />}
+                  </div>
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    style={{ width: "100%", height: "150px" }}
+                  />
                   <div className="product-information">
                     <div className="product-info">
                       <h3>{product.name}</h3>
                       <p>₹{product.price} / pc</p>
-                      
                     </div>
-                    <div style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "space-around", marginTop: "10px" }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
-                        <span style={{ color: "green", fontSize: "12px" }}>Qty</span>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "10px",
+                        alignItems: "center",
+                        justifyContent: "space-around",
+                        marginTop: "10px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "10px",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span style={{ color: "green", fontSize: "12px" }}>
+                          Qty
+                        </span>
                         <div className="quantity-controls-one">
-                          <Button onClick={() => handleQuantityChange(product._id, product.quantity - 1)} disabled={product.quantity <= 0} style={{ borderRadius: "0px", backgroundColor: "#f5f5f5", width: "32px" }}>
+                          <Button
+                            onClick={() =>
+                              handleQuantityChange(
+                                product._id,
+                                product.quantity - 1
+                              )
+                            }
+                            disabled={product.quantity <= 0}
+                            style={{
+                              borderRadius: "0px",
+                              backgroundColor: "#f5f5f5",
+                              width: "32px",
+                            }}
+                          >
                             -
                           </Button>
-                          <InputNumber min={0} value={product.quantity} onChange={(value) => handleQuantityChange(product._id, value)} className="custom-input-number" style={{ width: "80px", textAlign: "center", borderTop: "1px solid #D9D9D9", borderBottom: "1px solid #D9D9D9", borderRadius: "0px" }} />
-                          <Button onClick={() => handleQuantityChange(product._id, product.quantity + 1)} style={{ borderRadius: "0px", backgroundColor: "#f5f5f5", width: "32px" }}>
+                          <InputNumber
+                            min={0}
+                            value={product.quantity}
+                            onChange={(value) =>
+                              handleQuantityChange(product._id, value)
+                            }
+                            className="custom-input-number"
+                            style={{
+                              width: "80px",
+                              textAlign: "center",
+                              borderTop: "1px solid #D9D9D9",
+                              borderBottom: "1px solid #D9D9D9",
+                              borderRadius: "0px",
+                            }}
+                          />
+                          <Button
+                            onClick={() =>
+                              handleQuantityChange(
+                                product._id,
+                                product.quantity + 1
+                              )
+                            }
+                            style={{
+                              borderRadius: "0px",
+                              backgroundColor: "#f5f5f5",
+                              width: "32px",
+                            }}
+                          >
                             +
                           </Button>
                         </div>
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
-                        <span style={{ color: "red", fontSize: "12px" }}>In Stock</span>
-                        <InputNumber min={0} value={product.inStockQuantity || 10} onChange={(value) => updateStockQuantity(product._id, value)} className="custom-input-number" style={{ width: "50px", textAlign: "center", borderTop: "1px solid #D9D9D9", borderBottom: "1px solid #D9D9D9", borderRadius: "0px" }} />
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: "10px",
+                        }}
+                      >
+                        <span style={{ color: "red", fontSize: "12px" }}>
+                          In Stock
+                        </span>
+                        <InputNumber
+                          min={0}
+                          value={product.inStockQuantity || undefined} // Start with empty input
+                          onChange={(value) =>
+                            handleInStockChange(product._id, value)
+                          }
+                          className="custom-input-number"
+                          style={{
+                            width: "50px",
+                            textAlign: "center",
+                            borderTop: "1px solid #D9D9D9",
+                            borderBottom: "1px solid #D9D9D9",
+                            borderRadius: "0px",
+                          }}
+                        />
                       </div>
                     </div>
                   </div>

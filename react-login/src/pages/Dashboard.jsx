@@ -78,6 +78,7 @@ const Dashboard = () => {
     if (path.includes("stock-order")) return "14";
     if (path.includes("employees")) return "15";
     if (path.includes("edit-profile")) return "16";
+    if (path.includes("branch-view")) return "17";
     return "1"; // Default to "1" for the dashboard
   };
 
@@ -98,16 +99,31 @@ const Dashboard = () => {
       13: "/dashboard/return-order",
       14: "/dashboard/stock-order",
       15: "/dashboard/employees",
-      16: "/dashboard/edit-profile", // Adjust if this has a dynamic parameter
+      16: "/dashboard/edit-profile",
+      17: "/dashboard/branch-view" 
     };
     navigate(routes[key]);
   };
 
   // Logout function
   const handleLogout = () => {
-    localStorage.clear(); // Clear all stored data
-    navigate("/login"); // Redirect to login page
+    // Get the username from localStorage
+    const username = localStorage.getItem("username");
+  
+    // Call the backend to update the `isUserLogin` to false
+    axios.post("http://43.205.54.210:3001/logout", { username })
+      .then((response) => {
+        // After backend successfully updates the status, clear localStorage
+        localStorage.clear(); // Clear all stored data (username, role, access, etc.)
+        navigate("/login"); // Redirect to login page
+      })
+      .catch((error) => {
+        console.error("Logout error:", error);
+        navigate("/login"); // If error occurs, still redirect to login
+      });
   };
+  
+  
 
   // Fetch function for stores
   const fetchStores = async () => {
@@ -191,6 +207,9 @@ const Dashboard = () => {
           {(isSuperAdmin || accessList.includes("employees")) && (
             <Menu.Item key="15" icon={<SolutionOutlined />}>Employees</Menu.Item>
           )}
+          {(isSuperAdmin || accessList.includes("branch-view")) && (
+            <Menu.Item key="17" icon={<DatabaseOutlined />}>Branch View</Menu.Item>
+          )}
           {(isSuperAdmin || accessList.includes("customer-information")) && (
             <Menu.Item key="3" icon={<FileOutlined />}>Customer Information</Menu.Item>
           )}
@@ -227,6 +246,7 @@ const Dashboard = () => {
           {(isSuperAdmin || accessList.includes("stock-order")) && (
             <Menu.Item key="14" icon={<DatabaseOutlined />}>Stock Order</Menu.Item>
           )}
+          
           
         </Menu>
       </Sider>

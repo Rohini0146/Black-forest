@@ -34,13 +34,13 @@ const Login = () => {
 
   const handleLoginSubmit = async (values) => {
     setIsLoading(true);
-
+  
     try {
       const response = await axios.post("http://43.205.54.210:3001/login", {
         username: values.username,
         password: values.password,
       });
-
+  
       if (response.status === 200 && response.data === "Login Successful") {
         const user = await axios.get(
           `http://43.205.54.210:3001/getUserByUsername/${values.username}`
@@ -49,9 +49,10 @@ const Login = () => {
         localStorage.setItem("role", user.data.type);
         localStorage.setItem("access", JSON.stringify(accessList));
         localStorage.setItem("username", values.username);
-  
+        localStorage.setItem("isUserLogin", "true");  // Set user login status in localStorage
+    
         alert("Login Successful!");
-
+  
         // Define the route mappings for each access type
         const accessRoutes = {
           "dashboard": "/dashboard",
@@ -71,7 +72,7 @@ const Login = () => {
           "employees": "/dashboard/employees",
           "edit-profile": "/dashboard/edit-profile",
         };
-
+  
         // Redirect to the first accessible page from the access list
         if (accessList.length > 0) {
           const firstAccessPage = accessList.find(access => accessRoutes[access]);
@@ -93,6 +94,7 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <div className="login-page">

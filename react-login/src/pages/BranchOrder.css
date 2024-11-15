@@ -248,19 +248,50 @@ th.ant-table-cell {
   display: flex;
   gap: 20px;
 }
-.category-card button {
-  width: 100% !important;
-  display: flex;
-  background: transparent;
-  gap: 20px;
-  align-items: center;
-  border: 1px solid #bfbfbf;
-  text-align: left;
-  height: 100px;
-  padding-bottom: 40px !important;
+.categories-container {
+  margin-bottom: 25px;
 }
+
+.category-card {
+  width: 150px !important; /* Fixed width for all cards */
+  height: 100px !important; /* Fixed height for all cards */
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.category-card button {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  text-align: center;
+  border: 1px solid #bfbfbf;
+  background-color: transparent;
+}
+
+.category-card button span {
+  font-size: 14px;
+  line-height: 1.2;
+  color: #333;
+}
+
+.slick-slide {
+  padding: 0 10px; /* Adjusts space between slides */
+}
+
+.slick-track {
+  display: flex;
+  gap: 10px;
+}
+
 .category-card span {
   white-space: pre-wrap;
+  text-align: left;
+  margin-bottom: 25px;
 }
 
 /* Only display the first 5 dots */
@@ -371,11 +402,21 @@ th.ant-table-cell {
   background: transparent;
   border-radius: 0px;
 }
-
+:where(.css-dev-only-do-not-override-vryruh).ant-btn-variant-solid {
+  color: #000;
+  border: 1px solid #1890ff !important;
+  background-color: #1890ff05 !important;
+}
+:where(.css-dev-only-do-not-override-vryruh).ant-btn-variant-solid:not(
+    :disabled
+  ):not(.ant-btn-disabled):hover {
+  background: #4096ff;
+  color: #1890ff;
+}
 .count-items {
   position: absolute;
   left: 10px;
-  bottom: 12px;
+  bottom: 0;
 }
 .create-order {
   display: flex;
@@ -495,7 +536,31 @@ th.ant-table-cell {
 .order-select-mob {
   display: none;
 }
+.fav {
+  cursor: pointer;
+  position: relative;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+.fav svg{
+  position: absolute;
+  top: -32px;
+  width: 20px;
+  left: 10px;
+  height: 20px !important;
+}
+.place-an-order{
+  background-color: #1890FF;
+}
+.place-an-order span{
+  color: #ffffff !important; 
+}
 @media (max-width: 768px) {
+  .product-price{
+    width: 18% !important;
+  }
   .category-card button {
     width: 150% !important;
   }
@@ -570,6 +635,10 @@ th.ant-table-cell {
     flex-wrap: wrap;
     justify-content: start;
   }
+  .category-card{
+    width: 100px !important;
+    height: 100px;
+  }
 }
 @media (max-width: 400px) {
   .product-container {
@@ -588,6 +657,10 @@ th.ant-table-cell {
   }
   .slick-prev {
     left: 0;
+  }
+  .category-card{
+    width: 80px !important;
+    height: 100px;
   }
   .category-card button {
     width: 200% !important;
