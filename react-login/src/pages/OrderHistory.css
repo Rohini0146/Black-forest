@@ -1,9 +1,16 @@
-@media(max-width:740px) {
-    .price-detail{
-        display: none !important;
-    }
-    .ant-layout-content .hist-od{
-        padding: 16px !important;
-    }
-    
+
+
+@media (max-width: 600px) {
+  .notes-box {
+    margin-top: 15px;
+  }
+}
+
+@media (max-width: 740px) {
+  .price-detail {
+    display: none !important;
+  }
+  .ant-layout-content .hist-od {
+    padding: 16px !important;
+  }
 }

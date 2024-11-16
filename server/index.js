@@ -335,7 +335,7 @@ app.post("/placeorders", async (req, res) => {
 // Route to get all orders (GET)
 app.get("/placeorders", async (req, res) => {
   try {
-    const { orderedDate, deliveryDate, branch } = req.query;
+    const { orderedDate, deliveryDate, branch, page = 1, pageSize = 10 } = req.query;
 
     const filterQuery = {};
 
@@ -368,15 +368,29 @@ app.get("/placeorders", async (req, res) => {
       filterQuery.branch = branch;
     }
 
-    // Fetch orders in descending order of createdAt
-    const orders = await PlaceOrder.find(filterQuery).sort({ createdAt: -1 });
+    // Pagination logic
+    const limit = parseInt(pageSize, 10); // Convert pageSize to an integer
+    const skip = (parseInt(page, 10) - 1) * limit; // Calculate the number of documents to skip
 
-    res.status(200).json(orders);
+    // Fetch total count of orders for the filters (without pagination)
+    const totalOrders = await PlaceOrder.countDocuments(filterQuery);
+
+    // Fetch paginated orders in descending order of createdAt
+    const orders = await PlaceOrder.find(filterQuery)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      orders, // Paginated orders
+      total: totalOrders, // Total number of orders matching the filters
+    });
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
+
 
 
 
@@ -505,6 +519,33 @@ app.put("/orders/:id/response", async (req, res) => {
     res.status(500).json({ error: "Failed to update response" });
   }
 });
+
+app.put("/orders/:id/notes", async (req, res) => {
+  try {
+    const { notes } = req.body; // Notes from the frontend
+    const { id } = req.params; // Order ID from the request parameters
+
+    // Update the `notes` field in the database
+    const updatedOrder = await OrderModel.findByIdAndUpdate(
+      id,
+      { notes }, // Update the notes field
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.json({
+      message: "Notes updated successfully",
+      data: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Error updating notes:", error);
+    res.status(500).json({ error: "Failed to update notes" });
+  }
+});
+
 
 // Route to fetch a single employee by EmployeeID
 app.get("/employees/:employeeId", async (req, res) => {

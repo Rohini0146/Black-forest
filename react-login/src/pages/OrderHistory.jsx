@@ -16,8 +16,16 @@ import {
   Menu,
   Dropdown,
   Modal,
+  Input,
 } from "antd";
-import { DownOutlined, FacebookFilled, FilterOutlined, GlobalOutlined, MailOutlined, PhoneTwoTone } from "@ant-design/icons";
+import {
+  DownOutlined,
+  FacebookFilled,
+  FilterOutlined,
+  GlobalOutlined,
+  MailOutlined,
+  PhoneTwoTone,
+} from "@ant-design/icons";
 import axios from "axios";
 import moment from "moment";
 import jsPDF from "jspdf";
@@ -45,6 +53,41 @@ const OrderHistory = () => {
   const [dateRange, setDateRange] = useState(null);
   const [selectedResponse, setSelectedResponse] = useState("Show All");
   const [branches, setBranches] = useState({});
+  const [notes, setNotes] = useState({}); // To store notes for all orders
+
+  const handleNotesChange = (orderId, value) => {
+    setNotes((prevNotes) => ({
+      ...prevNotes,
+      [orderId]: value, // Update notes for the specific order
+    }));
+  };
+
+  // Save notes to the backend
+  const handleSaveNotes = async (e, orderId) => {
+    e.preventDefault(); // Prevent page refresh when saving notes
+  
+    try {
+      const response = await axios.put(`http://43.205.54.210:3001/orders/${orderId}/notes`, {
+        notes: notes[orderId], // Send the specific note for the order
+      });
+  
+      if (response.status === 200) {
+        message.success("Notes updated successfully!");
+  
+        // Optionally fetch updated orders or just update the local state
+        setOrders((prevOrders) =>
+          prevOrders.map((order) =>
+            order._id === orderId ? { ...order, notes: notes[orderId] } : order
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error saving notes:", error);
+      message.error("Failed to save notes.");
+    }
+  };
+  
+
   const phoneIcon =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAEiSURBVHgB1ZQxTgJBFEDfEKPVNlpBhY3YmJhAZcUFMKG1s0Ct0QN4AG5gYecBpNJqG2NjIgkVHAAqGkggSzPMz4bAkllgs0MCL9lk/uTvy8/8P6P6E50H3jWUcYGiFWiqqjfW/ya4xi2+6k20Zgdk2BH7Ix4F8NCE+le4jiPRGYuoZqTdQRhfnMFbBbwT0lX86i+kgqzr3/bcRGKpcJXRlPTixxJUCtG9y1MHYhvl84RiadSz6Xzjd7HX7ITfnJxnxHn7/0dx0uXuS+wdw0c7micTEYdVvNr95SrnyHlnPZKJh2sGX3i5gbur9TnWCyIjVPuMVi0Us/BkKi3m2EjszRN54wf++lAywtvCdsKN4rQc5rPp4xpNK6PgXha4ww8U1Rm922Jd4jL68gAAAABJRU5ErkJggg=="; // Replace '...' with actual base64 data
   const mailIcon =
@@ -53,7 +96,6 @@ const OrderHistory = () => {
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAADoSURBVHgB7ZShCsJAGIC/E8GiyRcwGcVqs1ksNsFk8AXUxxBfwbZmMmlxySQomrRomskkOJbOG0MGMrcdbAPBD4777477OP7/58TNlhVgJqFJEgj2jqQjrKfcqUWdZDGFZUtJCuRIid8T5z83zCsMl2gxbamWqkSIH443V8vQqxHK1oLFyb8TKn5zvsNJjXEj+Nw4etJvhObYOEDbgNvD33NfN1rBZEMokcWzlHSwgPXVi7tzFV+IJE8MXOFIFbRUCM5nEFrtFleqLdYhO3GxgDalgDv/3y0bsUnSSPY5AX03IDlMR9B5AcAhRyzfq0oyAAAAAElFTkSuQmCC";
   const locationIcon =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAENSURBVHgB7ZSxagIxGIC/SGmX3tJNp5vaqVBw7HI+QAe30q1Ln6AP0D5An6Gbm5MPYCYXBQUnXXQ6F50E5VxiQhQRzjNKzskPDpIj+fLz/38iJksVAv8KInwg6CWKqogXqqsnL/hFinipFDlQICdyE9+k/az1dZLGOBGF8PHsKJYj6ExwwhTIWXyIUgC/EZRLMJzCe/3w2pPEb49W2om1eJa99uSIDX8tGBwRO3VFcGujLW7E5aItWhZOEQd3OreV3fz71aYjq3OcIp4n8NXYiX6a+pPZe9zEKxuhOcDQ1q0Yzz2Iz+GyV9pUPO3J23bF04NuvXs7roSkcn0298QS3yh6BQGfZoA/ZCKorgHSWkhHtCnc3gAAAABJRU5ErkJggg==";
-
 
   const limit = 3000; // Initial limit for data fetch
 
@@ -80,7 +122,6 @@ const OrderHistory = () => {
     fetchBranches();
   }, [fetchOrders]);
 
-
   const fetchBranches = async () => {
     try {
       const response = await axios.get("http://43.205.54.210:3001/stores");
@@ -95,8 +136,6 @@ const OrderHistory = () => {
       message.error("Failed to fetch branches. Please try again later.");
     }
   };
-
-
 
   // Apply the relevant filter based on the selected tab
   const applyTabFilter = (tabKey, ordersData = orders) => {
@@ -171,7 +210,6 @@ const OrderHistory = () => {
     }
   };
 
-
   const handleRangeChange = (dates) => {
     setDateRange(dates);
     if (dates) {
@@ -189,13 +227,12 @@ const OrderHistory = () => {
       setIsDateFilterActive(false);
     }
   };
-  
+
   useEffect(() => {
     if (!isDateFilterActive && activeTab) {
       applyTabFilter(activeTab); // Apply only on activeTab change
     }
   }, [activeTab, isDateFilterActive]);
-  
 
   const handleFilterTypeChange = (value) => {
     setFilterType(value);
@@ -221,80 +258,79 @@ const OrderHistory = () => {
 
   const handleMenuClick = async (e, orderId) => {
     const newResponse = e.key;
-  
+
     try {
       // Update the response in the backend
       await axios.put(`http://43.205.54.210:3001/orders/${orderId}/response`, {
         response: newResponse,
       });
-      message.success(`Response for Order ${orderId} updated to: ${newResponse}`);
-  
+      message.success(
+        `Response for Order ${orderId} updated to: ${newResponse}`
+      );
+
       // Update the specific order in both `orders` and `filteredOrders` arrays
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order._id === orderId ? { ...order, response: newResponse } : order
         )
       );
-  
+
       setFilteredOrders((prevFilteredOrders) =>
         prevFilteredOrders.map((order) =>
           order._id === orderId ? { ...order, response: newResponse } : order
         )
       );
-  
     } catch (error) {
       console.error("Failed to update response:", error);
       message.error("Failed to update response");
     }
   };
-  
+
   // Menu component for dropdown
   const menu = (orderId) => (
     <Menu onClick={(e) => handleMenuClick(e, orderId)}>
       {Object.keys(responseColors).map((key) => (
         <Menu.Item
           key={key}
-          style={{ color: key === selectedResponse ? responseColors[key] : "#000" }}
+          style={{
+            color: key === selectedResponse ? responseColors[key] : "#000",
+          }}
         >
           {key}
         </Menu.Item>
       ))}
     </Menu>
   );
-  
-  
 
   const colorMap = {
     "No Need": "red",
-    "Not Interest": "#000", 
-    "Out of Station": "#000", 
-    "Not Reachable": "#000", 
+    "Not Interest": "#000",
+    "Out of Station": "#000",
+    "Not Reachable": "#000",
     "Not Answering": "red",
     "Other Shop": "#000",
     "Visit Come to Shop": "#000",
-    'Waiting': "orange",
+    Waiting: "orange",
     "Order Taken by Customer": "#000",
     "Customer need not possible": "#000",
     "Whatsapp Model": "darkgreen",
   };
 
-
   const responseColors = {
-   "No Need": "red",
-    "Not Interest": "#000", 
-    "Out of Station": "#000", 
-    "Not Reachable": "#000", 
+    "No Need": "red",
+    "Not Interest": "#000",
+    "Out of Station": "#000",
+    "Not Reachable": "#000",
     "Not Answering": "red",
     "Other Shop": "#000",
     "Visit Come to Shop": "#000",
-    'Waiting': "orange",
+    Waiting: "orange",
     "Order Taken by Customer": "#000",
     "Customer need not possible": "#000",
     "Whatsapp Model": "darkgreen",
   };
 
   const responseOptions = ["Show All", ...Object.keys(responseColors)];
-
 
   // Adjust the handleFilterChange to prioritize client-side filtering and avoid unnecessary fetches
   const handleFilterChange = (value) => {
@@ -314,8 +350,6 @@ const OrderHistory = () => {
       setFilteredOrders(orders); // Reset to original data if no date range is selected
     }
   };
-  
-  
 
   const handleDownloadPDF = (order) => {
     const doc = new jsPDF("p", "mm", "a4");
@@ -662,8 +696,6 @@ const OrderHistory = () => {
     // Save the PDF
     doc.save(`Invoice_${order.form_no}.pdf`);
   };
-
-  
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -1111,15 +1143,21 @@ const OrderHistory = () => {
                       <div
                         style={{
                           display: "flex",
-                          alignItems: "center",
+                          alignItems: "baseline",
+                          justifyContent: 'space-between',
                           marginTop: "8px",
                           flexWrap: "wrap",
                         }}
                       >
-                        <Dropdown
-                          overlay={menu(order._id, handleMenuClick)}
-                          trigger={["click"]}
-                        >
+                        <div  
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          marginTop: "8px",
+                          flexWrap: "wrap",
+                        }}>
+                          {/* Dropdown for Response */}
+                        <Dropdown overlay={menu(order._id)} trigger={["click"]}>
                           <div
                             style={{ cursor: "pointer", marginRight: "16px" }}
                           >
@@ -1132,17 +1170,56 @@ const OrderHistory = () => {
                           </div>
                         </Dropdown>
 
-                        {/* Display the selected response with dynamic color */}
+                        {/* Display the selected response */}
                         {order.response && (
                           <span
                             style={{
-                              color: colorMap[order.response] || "#000", // Default color if not in colorMap
+                              color: colorMap[order.response] || "#000",
                               fontWeight: "bold",
+                              marginRight: "16px",
                             }}
                           >
-                             {order.response}
+                            {order.response}
                           </span>
                         )}
+                        </div>
+                        
+
+                        {/* Ant Design Input for Notes */}
+                        {/* Notes Input */}
+                        <div className="notes-box" style={{display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap'}}>
+                          {/* Show Existing Notes */}
+                        {order.notes && (
+                          <div
+                            style={{
+                              marginTop: "10px",
+                              fontStyle: "italic",
+                              color: "#595959",
+                            }}
+                          >
+                           <b>Notes : </b> {notes[order._id] || order.notes}
+                          </div>
+                        )}
+                        <Input
+                          placeholder="Enter notes here"
+                          value={notes[order._id] || ""} // Display the current input or existing notes
+                          onChange={(e) =>
+                            handleNotesChange(order._id, e.target.value)
+                          } // Update local state
+                          style={{width: '200px'}}
+                          
+                        />
+                        <Button
+                          type="primary"
+                          onClick={(e) => handleSaveNotes(e, order._id)} // Pass the event to prevent page refresh
+                          className="save-btn"
+                        >
+                          Save
+                        </Button>
+
+                        
+                        </div>
+                        
                       </div>
 
                       <div
@@ -1213,7 +1290,7 @@ const OrderHistory = () => {
           }}
         />
 
-<Modal
+        <Modal
           visible={isModalVisible}
           onCancel={() => setIsModalVisible(false)}
           footer={null}
@@ -1238,7 +1315,15 @@ const OrderHistory = () => {
                 >
                   {/* Left Section */}
                   <div style={{ width: "50%" }}>
-                    <p style={{ margin: "5px 0 10px", display: 'flex', alignItems: 'start', justifyContent: 'start', width: 'fit-content' }}>
+                    <p
+                      style={{
+                        margin: "5px 0 10px",
+                        display: "flex",
+                        alignItems: "start",
+                        justifyContent: "start",
+                        width: "fit-content",
+                      }}
+                    >
                       <img
                         src={mailIcon}
                         alt="Phone"
@@ -1246,7 +1331,15 @@ const OrderHistory = () => {
                       />
                       www.theblackforestcakes.com
                     </p>
-                    <p style={{ margin: "5px 0 10px", display: 'flex', alignItems: 'start', justifyContent: 'start', width: 'fit-content' }}>
+                    <p
+                      style={{
+                        margin: "5px 0 10px",
+                        display: "flex",
+                        alignItems: "start",
+                        justifyContent: "start",
+                        width: "fit-content",
+                      }}
+                    >
                       <img
                         src={emailIcon}
                         alt="Mail"
@@ -1254,7 +1347,15 @@ const OrderHistory = () => {
                       />
                       theblackforestcakes@gmail.com
                     </p>
-                    <p style={{ margin: "5px 0 10px", display: 'flex', alignItems: 'start', justifyContent: 'start', width: 'fit-content' }}>
+                    <p
+                      style={{
+                        margin: "5px 0 10px",
+                        display: "flex",
+                        alignItems: "start",
+                        justifyContent: "start",
+                        width: "fit-content",
+                      }}
+                    >
                       <img
                         src={locationIcon}
                         alt="Facebook"
@@ -1285,13 +1386,13 @@ const OrderHistory = () => {
                         borderBottom: "1px solid #D5D5D5",
                         paddingBottom: "10px",
                         marginBottom: "15px",
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'start',
-                        gap: '10px'
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "start",
+                        gap: "10px",
                       }}
                     >
-                       <img
+                      <img
                         src={phoneIcon}
                         alt="Facebook"
                         style={{ width: "25px", margin: "0px" }}
@@ -2100,8 +2201,6 @@ const OrderHistory = () => {
             </>
           )}
         </Modal>
-
-
       </Content>
     </Layout>
   );

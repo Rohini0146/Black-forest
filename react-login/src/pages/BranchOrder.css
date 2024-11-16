@@ -402,17 +402,7 @@ th.ant-table-cell {
   background: transparent;
   border-radius: 0px;
 }
-:where(.css-dev-only-do-not-override-vryruh).ant-btn-variant-solid {
-  color: #000;
-  border: 1px solid #1890ff !important;
-  background-color: #1890ff05 !important;
-}
-:where(.css-dev-only-do-not-override-vryruh).ant-btn-variant-solid:not(
-    :disabled
-  ):not(.ant-btn-disabled):hover {
-  background: #4096ff;
-  color: #1890ff;
-}
+
 .count-items {
   position: absolute;
   left: 10px;

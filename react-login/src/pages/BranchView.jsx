@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Card, Select, DatePicker, Button, message } from "antd";
+import { Card, Select, DatePicker, Button, message, Pagination } from "antd";
 import axios from "axios";
-import "../pages/BranchView.css";
+import "./BranchView.css";
 import moment from "moment";
 
 const { Option } = Select;
@@ -9,13 +9,16 @@ const { Option } = Select;
 const BranchView = () => {
   const [type, setType] = useState("pending");
   const [branch, setBranch] = useState("All");
-  const [orderedDate, setOrderedDate] = useState(null); // For filtering by order date
-  const [deliveryDate, setDeliveryDate] = useState(null); // For filtering by delivery date
+  const [orderedDate, setOrderedDate] = useState(null);
+  const [deliveryDate, setDeliveryDate] = useState(null);
   const [branches, setBranches] = useState([]);
-  const [orders, setOrders] = useState([]); // State to store placeorders data
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalOrders, setTotalOrders] = useState(0); // For tracking total number of orders
 
-  // Fetch branch data (this can be fetched for SuperAdmins or specific branch users)
+  // Fetch branch data
   useEffect(() => {
     const fetchBranches = async () => {
       setLoading(true);
@@ -35,40 +38,52 @@ const BranchView = () => {
     fetchBranches();
   }, []);
 
-  // Fetch placeorders data based on filters and user's branch
+  // Fetch orders data with pagination and filters
   useEffect(() => {
     const fetchOrders = async () => {
-        setLoading(true);
-        try {
-          const filters = {};
-    
-          if (orderedDate) filters.orderedDate = orderedDate.format("YYYY-MM-DD");
-          if (deliveryDate) filters.deliveryDate = deliveryDate.format("YYYY-MM-DD");
-    
-          const response = await axios.get(
-            "http://43.205.54.210:3001/placeorders",
-            { params: filters }
-          );
-          if (response.data) {
-            setOrders(response.data);
-          }
-        } catch (error) {
-          console.error("Error fetching orders:", error);
-          message.error("Failed to fetch orders");
-        } finally {
-          setLoading(false);
-        }
-      };
-    fetchOrders();
-  }, [orderedDate, deliveryDate]); // Trigger re-fetching when order or delivery date changes
+      setLoading(true);
+      try {
+        const filters = {
+          page: currentPage,
+          pageSize: pageSize,
+        };
 
-  // Function to handle filtering based on order date and delivery date
+        if (orderedDate) filters.orderedDate = orderedDate.format("YYYY-MM-DD");
+        if (deliveryDate)
+          filters.deliveryDate = deliveryDate.format("YYYY-MM-DD");
+        if (branch !== "All") filters.branch = branch;
+        if (type) filters.type = type;
+
+        const response = await axios.get(
+          "http://43.205.54.210:3001/placeorders",
+          { params: filters }
+        );
+        if (response.data) {
+          setOrders(response.data.orders || []);
+          setTotalOrders(response.data.total || 0); // Update total orders count
+        }
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+        message.error("Failed to fetch orders");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [orderedDate, deliveryDate, branch, type, currentPage, pageSize]);
+
   const handleOrderDateChange = (date) => {
-    setOrderedDate(date); // Update the order date
+    setOrderedDate(date);
   };
 
   const handleDeliveryDateChange = (date) => {
-    setDeliveryDate(date); // Update the delivery date
+    setDeliveryDate(date);
+  };
+
+  const handlePageChange = (page, size) => {
+    setCurrentPage(page);
+    setPageSize(size);
   };
 
   return (
@@ -103,7 +118,7 @@ const BranchView = () => {
           <label>Ordered Date</label>
           <DatePicker
             value={orderedDate}
-            onChange={handleOrderDateChange} // Handle change of order date
+            onChange={handleOrderDateChange}
             placeholder="Ordered Date"
             style={{ width: "100%" }}
           />
@@ -112,7 +127,7 @@ const BranchView = () => {
           <label>Delivery Date</label>
           <DatePicker
             value={deliveryDate}
-            onChange={handleDeliveryDateChange} // Handle change of delivery date
+            onChange={handleDeliveryDateChange}
             placeholder="Delivery Date"
             style={{ width: "100%" }}
           />
@@ -121,7 +136,7 @@ const BranchView = () => {
 
       {orders.map((order) => (
         <Card key={order._id} className="order-card">
-          <div className="order-details">
+          <div className="order-details-1">
             <div className="product-view">
               <svg
                 width="86"
@@ -488,10 +503,10 @@ const BranchView = () => {
 
               <div className="product-info">
                 <p>
-                  <b>Branch : </b> {order.branch || "N/A"}{" "}
+                  <b>Branch : </b> {order.branch || "N/A"}
                 </p>
                 <p>
-                  <b>Order ID : </b> {order.products[0]?.orderId || "N/A"}{" "}
+                  <b>Order ID : </b> {order.products[0]?.orderId || "N/A"}
                 </p>
                 <p>
                   <b>Delivery to : </b>
@@ -505,7 +520,7 @@ const BranchView = () => {
               </div>
             </div>
             <div className="order-action">
-              <div className="order-price">Total: ₹{order.totalAmount}</div>
+              <div className="order-price"> ₹{order.totalAmount}</div>
               <Button type="primary" className="view-order-button">
                 View Order
               </Button>
@@ -518,6 +533,26 @@ const BranchView = () => {
           </div>
         </Card>
       ))}
+
+      {/* Pagination */}
+      <div style={{ textAlign: "center", marginTop: "20px" }}>
+        <Pagination
+          current={currentPage}
+          pageSize={pageSize}
+          total={totalOrders}
+          onChange={handlePageChange}
+          showSizeChanger
+          pageSizeOptions={[5, 10, 20, 50]}
+          style={{
+            marginTop: "20px",
+            padding: "15px",
+            backgroundColor: "#e6f7ff",
+            display: 'flex',
+            alignItems:'end',
+            justifyContent: 'end'
+          }}
+        />
+      </div>
     </div>
   );
 };
