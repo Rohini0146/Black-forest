@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Card, Select, DatePicker, Button, message, Pagination } from "antd";
+import { DownloadOutlined, SaveOutlined } from '@ant-design/icons'; // Import the download icon
 import axios from "axios";
-import "./BranchView.css";
+import { useNavigate } from "react-router-dom";
+import { jsPDF } from "jspdf"; // Import jsPDF for PDF generation
+import "jspdf-autotable"; // For table formatting in the PDF
 import moment from "moment";
+import "./BranchView.css";
 
 const { Option } = Select;
 
@@ -16,7 +20,8 @@ const BranchView = () => {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [totalOrders, setTotalOrders] = useState(0); // For tracking total number of orders
+  const [totalOrders, setTotalOrders] = useState(0);
+  const navigate = useNavigate(); 
 
   // Fetch branch data
   useEffect(() => {
@@ -49,18 +54,17 @@ const BranchView = () => {
         };
 
         if (orderedDate) filters.orderedDate = orderedDate.format("YYYY-MM-DD");
-        if (deliveryDate)
-          filters.deliveryDate = deliveryDate.format("YYYY-MM-DD");
+        if (deliveryDate) filters.deliveryDate = deliveryDate.format("YYYY-MM-DD");
         if (branch !== "All") filters.branch = branch;
         if (type) filters.type = type;
 
-        const response = await axios.get(
-          "http://43.205.54.210:3001/placeorders",
-          { params: filters }
-        );
+        const response = await axios.get("http://43.205.54.210:3001/placeorders", {
+          params: filters
+        });
+
         if (response.data) {
           setOrders(response.data.orders || []);
-          setTotalOrders(response.data.total || 0); // Update total orders count
+          setTotalOrders(response.data.total || 0); 
         }
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -84,6 +88,47 @@ const BranchView = () => {
   const handlePageChange = (page, size) => {
     setCurrentPage(page);
     setPageSize(size);
+  };
+
+  const handleViewOrder = (orderId) => {
+    navigate(`/dashboard/view-order/${orderId}`); 
+  };
+
+  // Handle download PDF button click
+  const handleDownload = (order) => {
+    const doc = new jsPDF();
+    doc.setFontSize(12);
+    doc.text("Order Details", 14, 10);
+
+    // Add the table headers
+    const tableColumn = ["S. No", "Product Name", "Qty", "Unit Price", "Total Price", "Order Taken", "Sending Qty"];
+    const tableRows = [];
+
+    // Loop through each order item and add it to the table data
+    order.products.forEach((product, index) => {
+      const productData = [
+        index + 1,
+        product.name,
+        product.quantity,
+        `Rs: ${product.price}`,
+        `Rs: ${product.quantity * product.price}`,
+        product.orderTaken || "N/A",
+        product.quantity,
+      ];
+      tableRows.push(productData);
+    });
+
+    // Add the table to the PDF
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+      theme: "grid",
+    });
+
+    // Use the orderId from the first product to name the PDF file
+    const orderId = order.products[0]?.orderId || "UnknownOrder";
+    doc.save(`Order_${orderId}.pdf`);  // Save the PDF with the orderId
   };
 
   return (
@@ -138,7 +183,7 @@ const BranchView = () => {
         <Card key={order._id} className="order-card">
           <div className="order-details-1">
             <div className="product-view">
-              <svg
+            <svg
                 width="86"
                 height="81"
                 viewBox="0 0 86 81"
@@ -500,7 +545,6 @@ const BranchView = () => {
                   </clipPath>
                 </defs>
               </svg>
-
               <div className="product-info">
                 <p>
                   <b>Branch : </b> {order.branch || "N/A"}
@@ -521,9 +565,17 @@ const BranchView = () => {
             </div>
             <div className="order-action">
               <div className="order-price"> ₹{order.totalAmount}</div>
-              <Button type="primary" className="view-order-button">
+              <Button type="primary" onClick={() => handleViewOrder(order._id)}>
                 View Order
               </Button>
+              {/* Download PDF Icon */}
+              <Button
+                icon={<DownloadOutlined />}
+                type="default"
+                style={{ marginLeft: "10px", border: 'none' }}
+                onClick={() => handleDownload(order)} // Trigger PDF download
+                title="Download PDF"
+              />
               <div className="status">
                 <span>
                   {order.isStockOrder ? "Stock Order" : "Regular Order"}
@@ -547,9 +599,9 @@ const BranchView = () => {
             marginTop: "20px",
             padding: "15px",
             backgroundColor: "#e6f7ff",
-            display: 'flex',
-            alignItems:'end',
-            justifyContent: 'end'
+            display: "flex",
+            alignItems: "end",
+            justifyContent: "end",
           }}
         />
       </div>

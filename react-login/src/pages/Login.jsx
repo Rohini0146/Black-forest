@@ -71,6 +71,8 @@ const Login = () => {
           "stock-order": "/dashboard/stock-order",
           "employees": "/dashboard/employees",
           "edit-profile": "/dashboard/edit-profile",
+          "branch-view": "/dashboard/branch-view",
+          "product-view": "/dashboard/product-view",
         };
   
         // Redirect to the first accessible page from the access list

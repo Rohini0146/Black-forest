@@ -1,0 +1,28 @@
+.view-order-page {
+  padding: 20px;
+}
+
+.order-header {
+  background-color: #f5f5f5;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.order-details-2 {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.order-details-2 p {
+  margin: 5px 0;
+}
+
+.order-table .ant-table-thead > tr > th {
+  background-color: #e6f7ff;
+  text-align: center;
+}
+
+.order-table .ant-table-tbody > tr > td {
+  text-align: center;
+}

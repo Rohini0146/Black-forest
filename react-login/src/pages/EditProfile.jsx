@@ -68,6 +68,8 @@ const EditProfile = () => {
     "live-branch-order",
     "branch-order",
     "stock-order",
+    "branch-view",
+    "product-view",
     "return-order",
     "payments",
     "user-track",

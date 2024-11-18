@@ -19,6 +19,8 @@ import Profile from './pages/Profile';
 import AutoLogoutRedirect from "./pages/AutoLogoutRedirect";
 import Cart from './pages/Cart';
 import BranchView from './pages/BranchView';
+import ViewOrder from './pages/ViewOrder'; // Import the ViewOrder component
+import ProductView from './pages/ProductView';
 
 const ProtectedRoute = ({ children }) => {
   const isLoggedIn = localStorage.getItem("username") && localStorage.getItem("role");
@@ -55,10 +57,18 @@ function App() {
             <Route path="edit-profile/:username" element={<EditProfile />} />
             <Route path='cart' element={<Cart/>} />
             <Route path='branch-view' element={<BranchView />} />
+            <Route
+            path="view-order/:orderId"
+            element={<ProtectedRoute><ViewOrder /></ProtectedRoute>}
+          />
+          <Route path='product-view' element={<ProductView />} />
           </Route>
 
           {/* Standalone Route for Orders */}
           <Route path="/order" element={<ProtectedRoute><Order /></ProtectedRoute>} />
+
+          {/* Route for Viewing a Single Order */}
+          
 
           {/* Catch-All Route */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

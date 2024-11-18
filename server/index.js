@@ -298,11 +298,17 @@ app.post("/placeorders", async (req, res) => {
     // Generate a unique orderId based on the timestamp
     const orderId = `ORD-${new Date().getTime()}`;
 
-    // Add the generated orderId to each product
-    const updatedProducts = products.map((product) => ({
-      ...product,
-      orderId: orderId, // Assign the same orderId for all products in this order
-    }));
+    // Add the generated orderId and branches to each product
+    const updatedProducts = products.map((product) => {
+      return {
+        ...product,
+        orderId: orderId, // Assign the same orderId for all products in this order
+        branches: product.branches.map(branch => ({
+          ...branch,
+          name: branch.name || "No branch", // Default branch name if not provided
+        }))
+      };
+    });
 
     console.log("Updated Products with orderId:", updatedProducts); // Debugging line
 
@@ -314,7 +320,7 @@ app.post("/placeorders", async (req, res) => {
       isStockOrder,
       deliveryDate,
       deliveryTime,
-      branch, // Add branch field
+      branch, // Add branch field for the order
     });
 
     await newOrder.save(); // Save the order to the database
@@ -330,7 +336,6 @@ app.post("/placeorders", async (req, res) => {
 
 
 
-
 // Route to get all orders (GET)
 // Route to get all orders (GET)
 app.get("/placeorders", async (req, res) => {
@@ -343,7 +348,8 @@ app.get("/placeorders", async (req, res) => {
     if (orderedDate) {
       const startOfOrderedDate = new Date(orderedDate);
       const endOfOrderedDate = new Date(startOfOrderedDate);
-      endOfOrderedDate.setDate(startOfOrderedDate.getDate() + 1);
+      // Set the time to 23:59:59 so it includes the entire day
+      endOfOrderedDate.setHours(23, 59, 59, 999);
 
       filterQuery.createdAt = {
         $gte: startOfOrderedDate,
@@ -355,7 +361,8 @@ app.get("/placeorders", async (req, res) => {
     if (deliveryDate) {
       const startOfDeliveryDate = new Date(deliveryDate);
       const endOfDeliveryDate = new Date(startOfDeliveryDate);
-      endOfDeliveryDate.setDate(startOfDeliveryDate.getDate() + 1);
+      // Set the time to 23:59:59 so it includes the entire day
+      endOfDeliveryDate.setHours(23, 59, 59, 999);
 
       filterQuery.deliveryDate = {
         $gte: startOfDeliveryDate,
@@ -392,7 +399,21 @@ app.get("/placeorders", async (req, res) => {
 });
 
 
+app.get("/placeorders/:orderId", async (req, res) => {
+  const { orderId } = req.params;
 
+  try {
+    const order = await PlaceOrder.findById(orderId); // Fetch the order by orderId (MongoDB ObjectId)
+    if (order) {
+      res.json(order);
+    } else {
+      res.status(404).json({ error: "Order not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching order details:", error);
+    res.status(500).json({ error: "Failed to fetch order details" });
+  }
+});
 
 
 

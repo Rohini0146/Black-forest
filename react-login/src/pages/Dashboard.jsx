@@ -25,6 +25,7 @@ import {
   ReloadOutlined,
   ProfileOutlined,
   ShopOutlined,
+  ProductOutlined,
 } from "@ant-design/icons";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -79,6 +80,8 @@ const Dashboard = () => {
     if (path.includes("employees")) return "15";
     if (path.includes("edit-profile")) return "16";
     if (path.includes("branch-view")) return "17";
+    if (path.includes("view-order")) return "18";
+    if (path.includes("product-view")) return "19";
     return "1"; // Default to "1" for the dashboard
   };
 
@@ -100,7 +103,9 @@ const Dashboard = () => {
       14: "/dashboard/stock-order",
       15: "/dashboard/employees",
       16: "/dashboard/edit-profile",
-      17: "/dashboard/branch-view" 
+      17: "/dashboard/branch-view",
+      18: "/dashboard/view-order",
+      19: "/dashboard/product-view",
     };
     navigate(routes[key]);
   };
@@ -209,6 +214,9 @@ const Dashboard = () => {
           )}
           {(isSuperAdmin || accessList.includes("branch-view")) && (
             <Menu.Item key="17" icon={<DatabaseOutlined />}>Branch View</Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("product-view")) && (
+            <Menu.Item key="19" icon={<ProductOutlined />}>Product View</Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("customer-information")) && (
             <Menu.Item key="3" icon={<FileOutlined />}>Customer Information</Menu.Item>

@@ -31,6 +31,8 @@ const Profile = () => {
     "employees",
     "live-branch-order",
     "branch-order",
+    "branch-view",
+    "product-view",
     "stock-order",
     "return-order",
     "payments",
