@@ -8,9 +8,9 @@ const stores = require("./models/Stores");
 const status = require("./models/OrderStatus");
 const AddUser = require("./models/AddUser");
 const ProductCategory = require("./models/ProductCategories");
-const Pastry  = require("./models/Pastries");
+const Pastry = require("./models/Pastries");
 const PlaceOrder = require("./models/PlaceOrder");
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require("uuid");
 
 require("dotenv").config();
 
@@ -42,7 +42,6 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-
 //stockuser
 app.post("/adduser", async (req, res) => {
   try {
@@ -52,12 +51,9 @@ app.post("/adduser", async (req, res) => {
   } catch (error) {
     if (error.code === 11000) {
       // Duplicate key error
-      res
-        .status(400)
-        .json({
-          message:
-            "Username already exists. Please choose a different username.",
-        });
+      res.status(400).json({
+        message: "Username already exists. Please choose a different username.",
+      });
     } else {
       res
         .status(500)
@@ -112,7 +108,8 @@ app.post("/login", async (req, res) => {
       // Prevent login if the user is forcefully logged out
       if (user.isForceLogout) {
         return res.status(403).json({
-          message: "Your account has been forcefully logged out. Please contact admin.",
+          message:
+            "Your account has been forcefully logged out. Please contact admin.",
         });
       }
 
@@ -130,16 +127,15 @@ app.post("/login", async (req, res) => {
       // Return user details with access levels
       res.status(200).json("Login Successful");
     } else {
-      res.status(401).json({ message: "Invalid username or password. Please try again." });
+      res
+        .status(401)
+        .json({ message: "Invalid username or password. Please try again." });
     }
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Error during login" });
   }
 });
-
-
-
 
 // Logout endpoint (can be called when the user logs out normally)
 // Logout route for manual logout
@@ -167,11 +163,10 @@ app.post("/logout", async (req, res) => {
   }
 });
 
-
 // Force logout route for admin-initiated logout with timer
 app.put("/addusers/forceLogout", async (req, res) => {
   try {
-    const { username } = req.body;  // Receiving username in the request body
+    const { username } = req.body; // Receiving username in the request body
 
     // Find the user by username
     const user = await AddUser.findOne({ username });
@@ -181,9 +176,9 @@ app.put("/addusers/forceLogout", async (req, res) => {
     }
 
     // Mark user as logged out and force logout
-    user.isUserLogin = false;         // Mark user as logged out
-    user.isForceLogout = true;        // Set flag to true indicating forced logout
-    user.sessionExpiresAt = null;     // If using sessions, clear session expiry time
+    user.isUserLogin = false; // Mark user as logged out
+    user.isForceLogout = true; // Set flag to true indicating forced logout
+    user.sessionExpiresAt = null; // If using sessions, clear session expiry time
 
     await user.save();
     console.log(`User ${username} has been forcefully logged out`);
@@ -194,9 +189,6 @@ app.put("/addusers/forceLogout", async (req, res) => {
     res.status(500).json({ message: "Error logging out user" });
   }
 });
-
-
-
 
 // Update user details by username (or by ID)
 app.put("/addusers/:username", async (req, res) => {
@@ -264,10 +256,11 @@ app.get("/addusers/:username", async (req, res) => {
   }
 });
 
-
 app.get("/productcategories", async (req, res) => {
   try {
-    const productcategoriesList = await ProductCategory.find().sort({ created_at: -1 });
+    const productcategoriesList = await ProductCategory.find().sort({
+      created_at: -1,
+    });
     res.json(productcategoriesList);
   } catch (error) {
     console.error("Error fetching product categories:", error);
@@ -277,7 +270,9 @@ app.get("/productcategories", async (req, res) => {
 
 app.get("/pastries", async (req, res) => {
   try {
-    const pastriesList = await Pastry.find().populate('category').sort({ created_at: -1 });
+    const pastriesList = await Pastry.find()
+      .populate("category")
+      .sort({ created_at: -1 });
     res.json(pastriesList);
   } catch (error) {
     console.error("Error fetching pastries:", error);
@@ -285,15 +280,20 @@ app.get("/pastries", async (req, res) => {
   }
 });
 
-
-
-// Backend to filter orders by orderedDate and deliveryDate
+// Backend to filter orders by orderDate and deliveryDate
 
 app.post("/placeorders", async (req, res) => {
   console.log("Received order data:", req.body); // Debugging line to see what data is received
 
   try {
-    const { products, totalAmount, isStockOrder, deliveryDate, deliveryTime, branch } = req.body; // Include branch in destructuring
+    const {
+      products,
+      totalAmount,
+      isStockOrder,
+      deliveryDate,
+      deliveryTime,
+      branch,
+    } = req.body; // Include branch in destructuring
 
     // Generate a unique orderId based on the timestamp
     const orderId = `ORD-${new Date().getTime()}`;
@@ -303,10 +303,10 @@ app.post("/placeorders", async (req, res) => {
       return {
         ...product,
         orderId: orderId, // Assign the same orderId for all products in this order
-        branches: product.branches.map(branch => ({
+        branches: product.branches.map((branch) => ({
           ...branch,
           name: branch.name || "No branch", // Default branch name if not provided
-        }))
+        })),
       };
     });
 
@@ -334,39 +334,53 @@ app.post("/placeorders", async (req, res) => {
   }
 });
 
-
-
 // Route to get all orders (GET)
 // Route to get all orders (GET)
 app.get("/placeorders", async (req, res) => {
   try {
-    const { orderedDate, deliveryDate, branch, page = 1, pageSize = 10 } = req.query;
+    const {
+      orderDate,
+      deliveryDate,
+      branch,
+      page = 1,
+      pageSize = 10,
+    } = req.query;
 
     const filterQuery = {};
 
-    // Filter by ordered date (createdAt)
-    if (orderedDate) {
-      const startOfOrderedDate = new Date(orderedDate);
-      const endOfOrderedDate = new Date(startOfOrderedDate);
-      // Set the time to 23:59:59 so it includes the entire day
-      endOfOrderedDate.setHours(23, 59, 59, 999);
+    // Apply order date filter
+    if (orderDate) {
+      const startOfOrderDate = new Date(orderDate);
+      const endOfOrderDate = new Date(startOfOrderDate);
+      endOfOrderDate.setHours(23, 59, 59, 999);
 
       filterQuery.createdAt = {
-        $gte: startOfOrderedDate,
-        $lt: endOfOrderedDate,
+        $gte: startOfOrderDate,
+        $lte: endOfOrderDate,
       };
     }
 
-    // Filter by delivery date
+    // Apply delivery date filter
     if (deliveryDate) {
       const startOfDeliveryDate = new Date(deliveryDate);
       const endOfDeliveryDate = new Date(startOfDeliveryDate);
-      // Set the time to 23:59:59 so it includes the entire day
       endOfDeliveryDate.setHours(23, 59, 59, 999);
 
       filterQuery.deliveryDate = {
         $gte: startOfDeliveryDate,
-        $lt: endOfDeliveryDate,
+        $lte: endOfDeliveryDate,
+      };
+    }
+
+    // Default: Fetch today's orders if no filters are applied
+    if (!orderDate && !deliveryDate) {
+      const today = new Date();
+      const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+      const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+
+      filterQuery.createdAt = {
+        $gte: startOfToday,
+        $lte: endOfToday,
       };
     }
 
@@ -375,28 +389,28 @@ app.get("/placeorders", async (req, res) => {
       filterQuery.branch = branch;
     }
 
-    // Pagination logic
-    const limit = parseInt(pageSize, 10); // Convert pageSize to an integer
-    const skip = (parseInt(page, 10) - 1) * limit; // Calculate the number of documents to skip
+    // Pagination
+    const limit = parseInt(pageSize, 10);
+    const skip = (parseInt(page, 10) - 1) * limit;
 
-    // Fetch total count of orders for the filters (without pagination)
+    // Fetch total count of orders matching filters
     const totalOrders = await PlaceOrder.countDocuments(filterQuery);
 
-    // Fetch paginated orders in descending order of createdAt
+    // Fetch paginated orders
     const orders = await PlaceOrder.find(filterQuery)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1 }) // Sort by creation date
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .populate("branch", "name") // Populate branch details
+      .lean();
 
-    res.status(200).json({
-      orders, // Paginated orders
-      total: totalOrders, // Total number of orders matching the filters
-    });
+    res.status(200).json({ orders, total: totalOrders });
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
+
 
 
 app.get("/placeorders/:orderId", async (req, res) => {
@@ -414,8 +428,6 @@ app.get("/placeorders/:orderId", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch order details" });
   }
 });
-
-
 
 // API to fetch user details by username (for access and role after login)
 app.get("/getUserByUsername/:username", async (req, res) => {
@@ -566,7 +578,6 @@ app.put("/orders/:id/notes", async (req, res) => {
     res.status(500).json({ error: "Failed to update notes" });
   }
 });
-
 
 // Route to fetch a single employee by EmployeeID
 app.get("/employees/:employeeId", async (req, res) => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Card, Select, DatePicker, Button, message, Pagination } from "antd";
-import { DownloadOutlined, SaveOutlined } from '@ant-design/icons'; // Import the download icon
+import { DownloadOutlined } from "@ant-design/icons"; // Import the download icon
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf"; // Import jsPDF for PDF generation
@@ -13,7 +13,7 @@ const { Option } = Select;
 const BranchView = () => {
   const [type, setType] = useState("pending");
   const [branch, setBranch] = useState("All");
-  const [orderedDate, setOrderedDate] = useState(null);
+  const [orderDate, setOrderDate] = useState(null);
   const [deliveryDate, setDeliveryDate] = useState(null);
   const [branches, setBranches] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -21,7 +21,7 @@ const BranchView = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalOrders, setTotalOrders] = useState(0);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   // Fetch branch data
   useEffect(() => {
@@ -53,18 +53,27 @@ const BranchView = () => {
           pageSize: pageSize,
         };
 
-        if (orderedDate) filters.orderedDate = orderedDate.format("YYYY-MM-DD");
-        if (deliveryDate) filters.deliveryDate = deliveryDate.format("YYYY-MM-DD");
         if (branch !== "All") filters.branch = branch;
         if (type) filters.type = type;
+        if (deliveryDate)
+          filters.deliveryDate = deliveryDate.format("YYYY-MM-DD");
+        if (orderDate) {
+          filters.orderDate = orderDate.format("YYYY-MM-DD");
+        } else if (!deliveryDate) {
+          // Default to today's orders only if no other filters are set
+          filters.orderDate = moment().format("YYYY-MM-DD");
+        }
 
-        const response = await axios.get("http://43.205.54.210:3001/placeorders", {
-          params: filters
-        });
+        const response = await axios.get(
+          "http://43.205.54.210:3001/placeorders",
+          {
+            params: filters,
+          }
+        );
 
         if (response.data) {
           setOrders(response.data.orders || []);
-          setTotalOrders(response.data.total || 0); 
+          setTotalOrders(response.data.total || 0);
         }
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -75,15 +84,15 @@ const BranchView = () => {
     };
 
     fetchOrders();
-  }, [orderedDate, deliveryDate, branch, type, currentPage, pageSize]);
+  }, [orderDate, deliveryDate, branch, type, currentPage, pageSize]);
 
-  const handleOrderDateChange = (date) => {
-    setOrderedDate(date);
-  };
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchOrders(); // Fetch orders at regular intervals
+    }, 5000); // 5000ms (5 seconds)
 
-  const handleDeliveryDateChange = (date) => {
-    setDeliveryDate(date);
-  };
+    return () => clearInterval(interval); // Clear the interval on unmount
+  }, [branch, type, deliveryDate, orderDate, currentPage, pageSize]);
 
   const handlePageChange = (page, size) => {
     setCurrentPage(page);
@@ -91,7 +100,7 @@ const BranchView = () => {
   };
 
   const handleViewOrder = (orderId) => {
-    navigate(`/dashboard/view-order/${orderId}`); 
+    navigate(`/dashboard/view-order/${orderId}`);
   };
 
   // Handle download PDF button click
@@ -101,7 +110,15 @@ const BranchView = () => {
     doc.text("Order Details", 14, 10);
 
     // Add the table headers
-    const tableColumn = ["S. No", "Product Name", "Qty", "Unit Price", "Total Price", "Order Taken", "Sending Qty"];
+    const tableColumn = [
+      "S. No",
+      "Product Name",
+      "Qty",
+      "Unit Price",
+      "Total Price",
+      "Order Taken",
+      "Sending Qty",
+    ];
     const tableRows = [];
 
     // Loop through each order item and add it to the table data
@@ -128,7 +145,7 @@ const BranchView = () => {
 
     // Use the orderId from the first product to name the PDF file
     const orderId = order.products[0]?.orderId || "UnknownOrder";
-    doc.save(`Order_${orderId}.pdf`);  // Save the PDF with the orderId
+    doc.save(`Order_${orderId}.pdf`); // Save the PDF with the orderId
   };
 
   return (
@@ -160,21 +177,23 @@ const BranchView = () => {
           </Select>
         </div>
         <div className="filter-item">
-          <label>Ordered Date</label>
+          <label>Order Date</label>
           <DatePicker
-            value={orderedDate}
-            onChange={handleOrderDateChange}
-            placeholder="Ordered Date"
+            value={orderDate}
+            onChange={setOrderDate}
+            placeholder="Select Order Date"
             style={{ width: "100%" }}
+            format="YYYY-MM-DD"
           />
         </div>
         <div className="filter-item">
           <label>Delivery Date</label>
           <DatePicker
             value={deliveryDate}
-            onChange={handleDeliveryDateChange}
-            placeholder="Delivery Date"
+            onChange={setDeliveryDate}
+            placeholder="Select Delivery Date"
             style={{ width: "100%" }}
+            format="YYYY-MM-DD"
           />
         </div>
       </div>
@@ -183,7 +202,7 @@ const BranchView = () => {
         <Card key={order._id} className="order-card">
           <div className="order-details-1">
             <div className="product-view">
-            <svg
+              <svg
                 width="86"
                 height="81"
                 viewBox="0 0 86 81"
@@ -572,7 +591,7 @@ const BranchView = () => {
               <Button
                 icon={<DownloadOutlined />}
                 type="default"
-                style={{ marginLeft: "10px", border: 'none' }}
+                style={{ marginLeft: "10px", border: "none" }}
                 onClick={() => handleDownload(order)} // Trigger PDF download
                 title="Download PDF"
               />
