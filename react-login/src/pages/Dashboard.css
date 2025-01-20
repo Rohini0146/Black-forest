@@ -1,89 +1,122 @@
 /* src/pages/Dashboard.css */
 .logo {
-    height: 32px;
-    margin: 16px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .header-content {
-    display: flex;
-    justify-content: flex-end;
-    padding-right: 20px;
-    align-items: center;
-  }
-  
-  .user-info {
-    display: flex;
-    align-items: center;
-  }
-  
-  .site-layout-background {
-    background: #002140;
-  }
-  
-  div::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  div::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-  
-  div::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 8px;
-  }
-  
-  div::-webkit-scrollbar-thumb:hover {
-    background: #555;
-  }
+  height: 32px;
+  margin: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  aside.ant-layout-sider{
-    position: sticky;
-    top: 0;
-    left: 0;
-    height: 100vh;
-  }
+.header-content {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 20px;
+  align-items: center;
+}
 
-  .dashboard{
-    background: transparent !important;
-  }
+.user-info {
+  display: flex;
+  align-items: center;
+}
 
-  @media (max-width: 900px) {
-    main.ant-layout-content{
-      margin: 0 !important;
-    }
-    .content1 .ant-row{
-      display: flex !important;
+.site-layout-background {
+  background: #002140;
+}
 
-    }
-    .content1 .ant-col{
-      width: 100%;
-      max-width: fit-content;
-      flex: 50;
-    }
-  }
+div::-webkit-scrollbar {
+  width: 6px;
+}
 
-@media (max-width: 768px) {
-  aside.ant-layout-sider{
-    flex: 0 0 60px !important;
-    max-width: 60px !important;
-    min-width: 60px !important;
-    width: 60px !important;
-    position: sticky;
-    top: 0;
-    left: 0;
-    height: 100vh;
+div::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+div::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 8px;
+}
+
+div::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+aside.ant-layout-sider{
+  position: sticky;
+  top: 0;
+  left: 0;
+  height: 100vh;
+}
+
+.dashboard{
+  background: transparent !important;
+}
+
+.ant-drawer-body{
+  padding: 0 !important;
+}
+
+.menu-button{
+  display: none;
+}
+
+.header-left img{
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .content1 .ant-row{
+    display: flex !important;
+
   }
-  .ant-layout-sider-trigger{
-    display: none !important;
-  }
-  .logo-img{
-    width: 126% !important;
-    transition: width 0.3s;
-    padding: 10px 0 !important;
+  .content1 .ant-col{
+    width: 100%;
+    max-width: fit-content;
+    flex: 50;
   }
 }
- 
+
+@media (max-width: 768px) {
+aside.ant-layout-sider{
+  flex: 0 0 60px !important;
+  max-width: 60px !important;
+  min-width: 60px !important;
+  width: 60px !important;
+  position: sticky;
+  top: 0;
+  left: 0;
+  height: 100vh;
+}
+.ant-layout-sider-trigger{
+  display: none !important;
+}
+.logo-img{
+  width: 126% !important;
+  transition: width 0.3s;
+  padding: 10px 0 !important;
+}
+.menu-button{
+  display: block;
+}
+.custom-sider{
+  display: none;
+}
+.header-content{
+  justify-content: space-between;
+  padding-left:20px ;
+}
+.header-left{
+  display: flex;
+  align-items: center;
+}
+
+span.anticon.anticon-menu{
+  color: #fff;
+}
+.header-left img{
+  display: block;
+}
+.anticon-menu svg{
+  width: 20px;
+  height: 20px;
+}
+}

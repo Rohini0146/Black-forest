@@ -18,7 +18,7 @@ const StockLogin = () => {
 
   const handleSuperAdminSubmit = async (values) => {
     try {
-      const response = await axios.post("http://43.205.54.210:3001/superadmin-login", {
+      const response = await axios.post("http://64.227.145.104:3001/superadmin-login", {
         adminID: values.adminID,
         password: values.password,
       });

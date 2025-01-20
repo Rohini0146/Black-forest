@@ -36,14 +36,14 @@ const Login = () => {
     setIsLoading(true);
   
     try {
-      const response = await axios.post("http://43.205.54.210:3001/login", {
+      const response = await axios.post("http://64.227.145.104:3001/login", {
         username: values.username,
         password: values.password,
       });
   
       if (response.status === 200 && response.data === "Login Successful") {
         const user = await axios.get(
-          `http://43.205.54.210:3001/getUserByUsername/${values.username}`
+          `http://64.227.145.104:3001/getUserByUsername/${values.username}`
         );
         const accessList = user.data.access || [];
         localStorage.setItem("role", user.data.type);

@@ -38,7 +38,7 @@ const History = () => {
     const fetchOrders = async () => {
       setLoading(true);
       try {
-        const response = await axios.get("http://43.205.54.210:3001/orders");
+        const response = await axios.get("http://64.227.145.104:3001/orders");
         const sortedOrders = response.data.sort(
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
         );

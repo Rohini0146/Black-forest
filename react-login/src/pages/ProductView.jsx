@@ -25,7 +25,7 @@ const ProductView = () => {
     const fetchBranches = async () => {
       setLoading(true);
       try {
-        const response = await axios.get("http://43.205.54.210:3001/stores");
+        const response = await axios.get("http://64.227.145.104:3001/stores");
         if (response.data) {
           setBranches(response.data);
         }
@@ -62,7 +62,7 @@ const ProductView = () => {
       }
 
       const response = await axios.get(
-        "http://43.205.54.210:3001/placeorders",
+        "http://64.227.145.104:3001/orderplaceds",
         {
           params: filters,
         }

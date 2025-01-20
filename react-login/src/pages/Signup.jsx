@@ -26,7 +26,7 @@ const Signup = () => {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const response = await axios.post("http://43.205.54.210:3001/signup", {
+      const response = await axios.post("http://64.227.145.104:3001/signup", {
         phonenumber: values.phone,
         password: values.password, // Include password in the request
         verificationCode: values.verificationCode,

@@ -9,6 +9,8 @@ import {
   Card,
   List,
   Input,
+  Drawer,
+  Button,
 } from "antd";
 import {
   UserOutlined,
@@ -26,6 +28,7 @@ import {
   ProfileOutlined,
   ShopOutlined,
   ProductOutlined,
+  MenuOutlined,
 } from "@ant-design/icons";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -44,22 +47,21 @@ const Dashboard = () => {
   const [accessList, setAccessList] = useState([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [employeeName, setEmployeeName] = useState("");
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-
   useEffect(() => {
-    const username = localStorage.getItem("username"); // Assumes the username is stored in localStorage
-    setEmployeeName(username || "Employee"); // Fallback to "Employee" if username is not found
+    const username = localStorage.getItem("username");
+    setEmployeeName(username || "Employee");
   }, []);
 
   useEffect(() => {
-    // Fetch user access and role from localStorage
     const access = JSON.parse(localStorage.getItem("access")) || [];
     const role = localStorage.getItem("role");
     setAccessList(access);
-    setIsSuperAdmin(role === "superadmin"); // Check if user is superadmin
+    setIsSuperAdmin(role === "superadmin");
   }, []);
 
   const getMenuKeyFromPath = () => {
@@ -88,7 +90,7 @@ const Dashboard = () => {
   const handleMenuClick = ({ key }) => {
     const routes = {
       1: "/dashboard",
-      2: "/dashboard/profile", // New Profile page route
+      2: "/dashboard/profile",
       3: "/dashboard/customer-information",
       4: "/dashboard/order-information",
       5: "/dashboard/order-history",
@@ -110,31 +112,24 @@ const Dashboard = () => {
     navigate(routes[key]);
   };
 
-  // Logout function
   const handleLogout = () => {
-    // Get the username from localStorage
     const username = localStorage.getItem("username");
-  
-    // Call the backend to update the `isUserLogin` to false
-    axios.post("http://43.205.54.210:3001/logout", { username })
-      .then((response) => {
-        // After backend successfully updates the status, clear localStorage
-        localStorage.clear(); // Clear all stored data (username, role, access, etc.)
-        navigate("/login"); // Redirect to login page
+    axios
+      .post("http://64.227.145.104:3001/logout", { username })
+      .then(() => {
+        localStorage.clear();
+        navigate("/login");
       })
       .catch((error) => {
         console.error("Logout error:", error);
-        navigate("/login"); // If error occurs, still redirect to login
+        navigate("/login");
       });
   };
-  
-  
 
-  // Fetch function for stores
   const fetchStores = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://43.205.54.210:3001/stores");
+      const response = await axios.get("http://64.227.145.104:3001/stores");
       setStores(response.data);
       setFilteredStores(response.data);
     } catch (error) {
@@ -159,13 +154,17 @@ const Dashboard = () => {
     const handleResize = () => {
       setCollapsed(window.innerWidth <= 1023);
     };
-
-    window.addEventListener("resize", handleResize); // Add resize event listener
-    return () => window.removeEventListener("resize", handleResize); // Clean up event listener
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const toggleDrawer = () => {
+    setDrawerVisible(!drawerVisible);
+  };
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
+      {/* Sider for larger screens */}
       <Sider
         width={220}
         collapsible
@@ -174,7 +173,7 @@ const Dashboard = () => {
         style={{
           backgroundColor: "#fff",
           overflowY: "auto",
-          height: "100vh", // Make sure the Sider takes full height
+          height: "100vh",
         }}
         className="custom-sider"
       >
@@ -200,85 +199,236 @@ const Dashboard = () => {
           mode="inline"
           selectedKeys={[getMenuKeyFromPath()]}
           onClick={handleMenuClick}
-          style={{ backgroundColor: "fff" }}
         >
-          {/* Conditionally render all menu items if superadmin, else based on accessList */}
           {(isSuperAdmin || accessList.includes("dashboard")) && (
-            <Menu.Item key="1" icon={<UserOutlined />}>Dashboard</Menu.Item>
+            <Menu.Item key="1" icon={<UserOutlined />}>
+              Dashboard
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("profile")) && (
-            <Menu.Item key="2" icon={<UserOutlined />}>Profile</Menu.Item>
+            <Menu.Item key="2" icon={<UserOutlined />}>
+              Profile
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("employees")) && (
-            <Menu.Item key="15" icon={<SolutionOutlined />}>Employees</Menu.Item>
+            <Menu.Item key="15" icon={<SolutionOutlined />}>
+              Employees
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("branch-view")) && (
-            <Menu.Item key="17" icon={<DatabaseOutlined />}>Branch View</Menu.Item>
+            <Menu.Item key="17" icon={<DatabaseOutlined />}>
+              Branch View
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("product-view")) && (
-            <Menu.Item key="19" icon={<ProductOutlined />}>Product View</Menu.Item>
+            <Menu.Item key="19" icon={<ProductOutlined />}>
+              Product View
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("customer-information")) && (
-            <Menu.Item key="3" icon={<FileOutlined />}>Customer Information</Menu.Item>
+            <Menu.Item key="3" icon={<FileOutlined />}>
+              Customer Information
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("order-information")) && (
-            <Menu.Item key="4" icon={<OrderedListOutlined />}>Live Order</Menu.Item>
+            <Menu.Item key="4" icon={<OrderedListOutlined />}>
+              Live Order
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("order-history")) && (
-            <Menu.Item key="5" icon={<HistoryOutlined />}>Order History</Menu.Item>
+            <Menu.Item key="5" icon={<HistoryOutlined />}>
+              Order History
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("product-information")) && (
-            <Menu.Item key="6" icon={<ShoppingOutlined />}>Product Information</Menu.Item>
+            <Menu.Item key="6" icon={<ShoppingOutlined />}>
+              Product Information
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("payment-information")) && (
-            <Menu.Item key="7" icon={<LineChartOutlined />}>Payment Information</Menu.Item>
+            <Menu.Item key="7" icon={<LineChartOutlined />}>
+              Payment Information
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("sales-person")) && (
-            <Menu.Item key="8" icon={<TeamOutlined />}>Sales Person</Menu.Item>
+            <Menu.Item key="8" icon={<TeamOutlined />}>
+              Sales Person
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("customer-analysis")) && (
-            <Menu.Item key="9" icon={<NotificationOutlined />}>Customer Analysis</Menu.Item>
+            <Menu.Item key="9" icon={<NotificationOutlined />}>
+              Customer Analysis
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("logs")) && (
-            <Menu.Item key="10" icon={<SettingOutlined />}>Logs</Menu.Item>
+            <Menu.Item key="10" icon={<SettingOutlined />}>
+              Logs
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("branch-order")) && (
-            <Menu.Item key="11" icon={<ShopOutlined />}>Branch Order</Menu.Item>
+            <Menu.Item key="11" icon={<ShopOutlined />}>
+              Branch Order
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("live-branch-order")) && (
-            <Menu.Item key="12" icon={<ProfileOutlined />}>Live Branch Order</Menu.Item>
+            <Menu.Item key="12" icon={<ProfileOutlined />}>
+              Live Branch Order
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("return-order")) && (
-            <Menu.Item key="13" icon={<ReloadOutlined />}>Return Order</Menu.Item>
+            <Menu.Item key="13" icon={<ReloadOutlined />}>
+              Return Order
+            </Menu.Item>
           )}
           {(isSuperAdmin || accessList.includes("stock-order")) && (
-            <Menu.Item key="14" icon={<DatabaseOutlined />}>Stock Order</Menu.Item>
+            <Menu.Item key="14" icon={<DatabaseOutlined />}>
+              Stock Order
+            </Menu.Item>
           )}
-          
-          
         </Menu>
       </Sider>
+
+      {/* Drawer for mobile view */}
+      <Drawer
+        title="Menu"
+        placement="left"
+        closable={false}
+        onClose={toggleDrawer}
+        visible={drawerVisible}
+        width={250}
+      >
+        <Menu
+          mode="inline"
+          selectedKeys={[getMenuKeyFromPath()]}
+          onClick={handleMenuClick}
+        >
+          {(isSuperAdmin || accessList.includes("dashboard")) && (
+            <Menu.Item key="1" icon={<UserOutlined />}>
+              Dashboard
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("profile")) && (
+            <Menu.Item key="2" icon={<UserOutlined />}>
+              Profile
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("employees")) && (
+            <Menu.Item key="15" icon={<SolutionOutlined />}>
+              Employees
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("branch-view")) && (
+            <Menu.Item key="17" icon={<DatabaseOutlined />}>
+              Branch View
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("product-view")) && (
+            <Menu.Item key="19" icon={<ProductOutlined />}>
+              Product View
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("customer-information")) && (
+            <Menu.Item key="3" icon={<FileOutlined />}>
+              Customer Information
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("order-information")) && (
+            <Menu.Item key="4" icon={<OrderedListOutlined />}>
+              Live Order
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("order-history")) && (
+            <Menu.Item key="5" icon={<HistoryOutlined />}>
+              Order History
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("product-information")) && (
+            <Menu.Item key="6" icon={<ShoppingOutlined />}>
+              Product Information
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("payment-information")) && (
+            <Menu.Item key="7" icon={<LineChartOutlined />}>
+              Payment Information
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("sales-person")) && (
+            <Menu.Item key="8" icon={<TeamOutlined />}>
+              Sales Person
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("customer-analysis")) && (
+            <Menu.Item key="9" icon={<NotificationOutlined />}>
+              Customer Analysis
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("logs")) && (
+            <Menu.Item key="10" icon={<SettingOutlined />}>
+              Logs
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("branch-order")) && (
+            <Menu.Item key="11" icon={<ShopOutlined />}>
+              Branch Order
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("live-branch-order")) && (
+            <Menu.Item key="12" icon={<ProfileOutlined />}>
+              Live Branch Order
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("return-order")) && (
+            <Menu.Item key="13" icon={<ReloadOutlined />}>
+              Return Order
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("stock-order")) && (
+            <Menu.Item key="14" icon={<DatabaseOutlined />}>
+              Stock Order
+            </Menu.Item>
+          )}
+        </Menu>
+      </Drawer>
 
       <Layout>
         <Header className="site-layout-background" style={{ padding: 0 }}>
           <div className="header-content">
-            <Dropdown
-              overlay={
-                <Menu onClick={({ key }) => key === "logout" && handleLogout()}>
-                  <Menu.Item key="profile">Profile</Menu.Item>
-                  <Menu.Item key="settings">Settings</Menu.Item>
-                  <Menu.Divider />
-                  <Menu.Item key="logout">Logout</Menu.Item>
-                </Menu>
-              }
-              trigger={["click"]}
-            >
-              <Avatar
-                icon={<UserOutlined />}
-                style={{ cursor: "pointer", marginRight: 16 }}
+            <div className="header-left">
+              <Button
+                className="menu-button"
+                type="link"
+                icon={<MenuOutlined />}
+                onClick={toggleDrawer}
+                style={{ marginRight: 16 }}
               />
-            </Dropdown>
-            <span style={{ color: "#fff" }}>{employeeName || "Employee"}</span>
+              <div>
+                <img src={logo} alt="Logo" style={{ width: "100px" }} />
+              </div>
+            </div>
+
+            <div>
+              <Dropdown
+                overlay={
+                  <Menu
+                    onClick={({ key }) => key === "logout" && handleLogout()}
+                  >
+                    <Menu.Item key="profile">Profile</Menu.Item>
+                    <Menu.Item key="settings">Settings</Menu.Item>
+                    <Menu.Divider />
+                    <Menu.Item key="logout">Logout</Menu.Item>
+                  </Menu>
+                }
+                trigger={["click"]}
+              >
+                <Avatar
+                  icon={<UserOutlined />}
+                  style={{ cursor: "pointer", marginRight: 16 }}
+                />
+              </Dropdown>
+              <span style={{ color: "#fff" }}>
+                {employeeName || "Employee"}
+              </span>
+            </div>
           </div>
         </Header>
 

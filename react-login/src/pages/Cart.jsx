@@ -45,7 +45,7 @@ const Cart = () => {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const response = await axios.get("http://43.205.54.210:3001/stores");
+        const response = await axios.get("http://64.227.145.104:3001/stores");
         if (response.data) {
           setBranches(response.data);
         }
@@ -104,12 +104,13 @@ const Cart = () => {
     localStorage.removeItem("cart");
   };
 
+
   const handlePlaceOrder = async () => {
     if (!branch) {
       message.error("Please select a branch before placing the order.");
       return;
     }
-  
+    console.log("Placing order...");
     try {
       const orderData = cartItems.map((item) => ({
         name: item.name,
@@ -118,16 +119,19 @@ const Cart = () => {
         inStockQuantity: item.inStockQuantity,
       }));
   
-      const response = await axios.post("http://43.205.54.210:3001/placeorders", {
+      console.log("Order Data:", orderData);
+  
+      const response = await axios.post("http://64.227.145.104:3001/orderplaceds", {
         products: orderData,
         totalAmount,
         isStockOrder,
         deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
         deliveryTime: deliveryTime ? deliveryTime.format("HH:mm") : null,
-        branch, // Include branch info here
+        branch, // Include the branch field
       });
   
       if (response.status === 201) {
+        console.log("Order placed successfully");
         setIsModalVisible(true);
         clearCart();
       } else {
@@ -137,6 +141,40 @@ const Cart = () => {
       console.error("Failed to place order:", error);
     }
   };
+
+  // const handlePlaceOrder = async () => {
+  //   if (!branch) {
+  //     message.error("Please select a branch before placing the order.");
+  //     return;
+  //   }
+  
+  //   try {
+  //     const orderData = cartItems.map((item) => ({
+  //       name: item.name,
+  //       quantity: item.quantity,
+  //       price: item.price,
+  //       inStockQuantity: item.inStockQuantity,
+  //     }));
+  
+  //     const response = await axios.post("http://64.227.145.104:3001/placeorders", {
+  //       products: orderData,
+  //       totalAmount,
+  //       isStockOrder,
+  //       deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
+  //       deliveryTime: deliveryTime ? deliveryTime.format("HH:mm") : null,
+  //       branch, // Include branch info here
+  //     });
+  
+  //     if (response.status === 201) {
+  //       setIsModalVisible(true);
+  //       clearCart();
+  //     } else {
+  //       console.error("Unexpected response status:", response.status);
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to place order:", error);
+  //   }
+  // };
 
   const handleModalClose = () => {
     setIsModalVisible(false);

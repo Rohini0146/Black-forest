@@ -6,14 +6,16 @@ const PlaceOrderSchema = new mongoose.Schema({
       name: { type: String, required: true },
       quantity: { type: Number, required: true },
       price: { type: Number, required: true },
-      orderId: { type: String, required: true }, // Order ID for each product
+      orderId: { type: String, required: true },
+      sendingQty: { type: Number, default: 0 }, // Add sendingQty
+      status: { type: String, default: "Not Started" }, // Add status
     },
   ],
   totalAmount: { type: Number, required: true },
   isStockOrder: { type: Boolean, default: false },
   deliveryDate: Date,
   deliveryTime: String,
-  branch: { type: String, required: true }, // Add branch field
+  branch: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 

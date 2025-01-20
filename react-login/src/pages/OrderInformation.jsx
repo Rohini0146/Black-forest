@@ -63,7 +63,7 @@ const OrderInformation = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://43.205.54.210:3001/orders?limit=${limit}`
+        `http://64.227.145.104:3001/orders?limit=${limit}`
       );
       const newOrders = response.data.orders;
       setOrders(newOrders);
@@ -83,7 +83,7 @@ const OrderInformation = () => {
 
   const fetchBranches = async () => {
     try {
-      const response = await axios.get("http://43.205.54.210:3001/stores");
+      const response = await axios.get("http://64.227.145.104:3001/stores");
       const branchesData = response.data;
       const branchesMap = {};
       branchesData.forEach((branch) => {
@@ -146,7 +146,7 @@ const OrderInformation = () => {
       const dateField =
         filterType === "deliveryDate" ? "delivery_date" : "created_at";
       const response = await axios.get(
-        `http://43.205.54.210:3001/orders?startDate=${startDate}&endDate=${endDate}&dateField=${dateField}`
+        `http://64.227.145.104:3001/orders?startDate=${startDate}&endDate=${endDate}&dateField=${dateField}`
       );
       const { orders } = response.data;
 

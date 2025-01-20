@@ -10,10 +10,11 @@ import {
   InputNumber,
   message,
   Spin,
+  Button,
 } from "antd";
 import axios from "axios";
 import moment from "moment";
-import { DatabaseOutlined, DatabaseTwoTone } from "@ant-design/icons";
+import { DatabaseTwoTone } from "@ant-design/icons";
 
 const { Option } = Select;
 
@@ -21,13 +22,14 @@ const ViewOrder = () => {
   const { orderId } = useParams(); // Get orderId from URL parameters
   const [order, setOrder] = useState(null); // Store order details
   const [loading, setLoading] = useState(true); // Loading state
+  const [updatedProducts, setUpdatedProducts] = useState([]); // Store updated product details
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         console.log("Fetching Order ID:", orderId); // Log order ID
         const response = await axios.get(
-          `http://43.205.54.210:3001/placeorders/${orderId}`
+          `http://64.227.145.104:3001/orderplaceds/${orderId}`
         );
         console.log("API Response:", response.data); // Log API response
 
@@ -67,91 +69,169 @@ const ViewOrder = () => {
   const extractedOrderId =
     order.products.length > 0 ? order.products[0].orderId : "N/A";
 
+  // Update sending quantity and status
+  const handleQtyChange = (name, value) => {
+    const updated = updatedProducts.map((product) => {
+      if (product.name === name) {
+        return {
+          ...product,
+          sendingQty: value, // Update only sendingQty but keep status unchanged
+        };
+      }
+      return product;
+    });
+  
+    // If product is not found in the updatedProducts array, add it with sendingQty
+    if (!updated.some((product) => product.name === name)) {
+      updated.push({
+        name,
+        sendingQty: value,
+        status: order.products.find((product) => product.name === name)?.status || "Not Started", // Retain the previous status if not updated
+      });
+    }
+  
+    setUpdatedProducts(updated);
+  };
+  
+  const handleStatusChange = (name, status) => {
+    const updated = updatedProducts.map((product) => {
+      if (product.name === name) {
+        return {
+          ...product,
+          status, // Update only status but keep sendingQty unchanged
+        };
+      }
+      return product;
+    });
+  
+    // If product is not found in the updatedProducts array, add it with status
+    if (!updated.some((product) => product.name === name)) {
+      updated.push({
+        name,
+        sendingQty: order.products.find((product) => product.name === name)?.sendingQty || 0, // Retain the previous sendingQty if not updated
+        status,
+      });
+    }
+  
+    setUpdatedProducts(updated);
+  };
+
+  const handleUpdate = async () => {
+    try {
+      if (updatedProducts.length === 0) {
+        message.warning("No changes to update.");
+        return;
+      }
+
+      console.log("Sending to Backend:", updatedProducts); // Debug the payload
+
+      const response = await axios.put(
+        `http://64.227.145.104:3001/orderplaceds/${orderId}`,
+        {
+          products: updatedProducts, // Send updated products
+        }
+      );
+
+      console.log("Order updated:", response.data);
+      message.success("Order updated successfully!");
+      // Rest of the logic...
+    } catch (error) {
+      console.error("Error updating order:", error);
+      message.error("Failed to update order.");
+    }
+  };
+
   // Columns for the Ant Design table
   const columns = [
     {
       title: "S. No",
       dataIndex: "serial",
       key: "serial",
-      render: (_, record, index) => index + 1,
+      render: (_, record, index) => (
+        <div style={{ textAlign: "center" }}>{index + 1}</div>
+      ),
     },
     {
       title: "Product Name",
       dataIndex: "name",
       key: "name",
+      render: (name) => <div style={{ textAlign: "center" }}>{name}</div>,
     },
     {
       title: "Qty",
       dataIndex: "quantity",
       key: "quantity",
+      render: (quantity) => (
+        <div style={{ textAlign: "center" }}>{quantity}</div>
+      ),
+    },
+    {
+      title: "InStock Quantity",
+      dataIndex: "inStockQuantity",
+      key: "inStockQuantity",
+      render: (inStockQuantity) => (
+        <div style={{ textAlign: "center" }}>{inStockQuantity}</div>
+      ),
     },
     {
       title: "Unit Price",
       dataIndex: "price",
       key: "price",
-      render: (price) => `₹${price}`,
+      render: (price) => (
+        <div style={{ textAlign: "center" }}>{`₹${price}`}</div>
+      ),
     },
-    {
-      title: "Total Price",
-      dataIndex: "totalPrice",
-      key: "totalPrice",
-      render: (_, record) => `₹${record.quantity * record.price}`,
-    },
-
     {
       title: "Sending Qty",
       dataIndex: "sendingQty",
       key: "sendingQty",
-      render: (text, record) => (
-        <InputNumber
-          min={0}
-          defaultValue={record.quantity}
-          onChange={(value) => handleSendingQtyChange(value, record)}
-        />
+      render: (sendingQty, record) => (
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <InputNumber
+            min={0}
+            value={sendingQty}
+            onChange={(value) => handleQtyChange(record.name, value)}
+            style={{ margin: "0 10px", width: "60px" }}
+          />
+        </div>
       ),
     },
     {
-      title: "Action",
-      dataIndex: "action",
-      key: "action",
-      render: (_, record) => (
-        <Select
-          defaultValue={record.status || "Not Started"}
-          onChange={(value) => handleStatusChange(value, record)}
-        >
-          <Option value="Not Started">Not Started</Option>
-          <Option value="Order Taken">Order Taken</Option>
-          <Option value="Preparing">Preparing</Option>
-          <Option value="Done">Done</Option>
-        </Select>
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status, record) => (
+        <div style={{ textAlign: "center" }}>
+          <Select
+            defaultValue={status || "Not Started"}
+            style={{ width: 120 }}
+            onChange={(value) => handleStatusChange(record.name, value)}
+          >
+            <Option value="Not Started">Not Started</Option>
+            <Option value="Order Taken">Order Taken</Option>
+            <Option value="Preparing">Preparing</Option>
+            <Option value="Done">Done</Option>
+          </Select>
+        </div>
       ),
     },
   ];
 
-  // Handle changes in sending quantity
-  const handleSendingQtyChange = (value, record) => {
-    console.log(`Updated Sending quantity for ${record.name}:`, value);
-  };
-
-  // Handle changes in order taken (name)
-  const handleOrderTakenChange = (value, record) => {
-    console.log(`Updated Order Taken by ${record.name}:`, value);
-  };
-
-  // Handle status change (action dropdown)
-  const handleStatusChange = (value, record) => {
-    console.log(`Updated status for ${record.name}: ${value}`);
-  };
-
   // Transform products data for the table
   const productData = order.products.map((product, index) => ({
-    key: index,
+    key: product.productId, // Use unique product ID here
     name: product.name,
+    inStockQuantity: product.inStockQuantity,
     quantity: product.quantity,
     price: product.price,
-    orderTaken: product.orderTaken || "N/A", // Default or fetched from the order data
-    sendingQty: product.quantity, // Set the initial sending quantity as the quantity
-    status: product.status || "Not Started", // Default status for the product
+    sendingQty:
+      updatedProducts.find((p) => p.name === product.name)?.sendingQty ||
+      product.sendingQty ||
+      0, // Default to 0 if no sendingQty is set
+    status:
+      updatedProducts.find((p) => p._id === product._id)?.status ||
+      product.status ||
+      "Not Started", // Default to "Not Started"
   }));
 
   return (
@@ -209,8 +289,15 @@ const ViewOrder = () => {
         dataSource={productData}
         pagination={false}
         bordered
-        style={{ marginBottom: "30px" }}
+        style={{ marginBottom: "30px", textAlign: "center" }}
       />
+
+      {/* Update Button */}
+      <div style={{ textAlign: "right" }}>
+        <Button type="primary" onClick={handleUpdate}>
+          Update
+        </Button>
+      </div>
     </div>
   );
 };

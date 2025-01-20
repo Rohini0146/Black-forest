@@ -11,7 +11,7 @@ const Logs = () => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://43.205.54.210:3001/userdatas");
+      const response = await axios.get("http://64.227.145.104:3001/userdatas");
       setLogs(response.data);
     } catch (error) {
       console.error("Error fetching logs:", error);

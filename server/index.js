@@ -8,8 +8,9 @@ const stores = require("./models/Stores");
 const status = require("./models/OrderStatus");
 const AddUser = require("./models/AddUser");
 const ProductCategory = require("./models/ProductCategories");
-const Pastry = require("./models/Pastries");
+const Pastry = require("./models/Pastry");
 const PlaceOrder = require("./models/PlaceOrder");
+const OrderPlaced = require("./models/orderplaced");
 const { v4: uuidv4 } = require("uuid");
 
 require("dotenv").config();
@@ -19,7 +20,7 @@ app.use(express.json());
 app.use(cors());
 app.use(
   cors({
-    origin: ["http://43.205.54.210", "http://yourdomain.com"],
+    origin: ["http://64.227.145.104", "http://yourdomain.com"],
   })
 );
 
@@ -46,7 +47,7 @@ mongoose
 app.post("/adduser", async (req, res) => {
   try {
     const newUser = new AddUser(req.body);
-    await newUser.save();
+    await newUser.save(); 
     res.status(201).json({ message: "User created successfully!" });
   } catch (error) {
     if (error.code === 11000) {
@@ -596,10 +597,199 @@ app.get("/employees/:employeeId", async (req, res) => {
   }
 });
 
+app.put("/placeorders/:Id", async (req, res) => {
+  try {
+    const { updatedProducts } = req.body; // Extract updated products
+
+    if (!updatedProducts || !Array.isArray(updatedProducts)) {
+      return res.status(400).json({ error: "Updated products array is missing or invalid" });
+    }
+
+    const order = await PlaceOrder.findById(req.params.Id); // Find order by ID
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Update each product's sendingQty and status in the order
+    order.products = order.products.map((product) => {
+      const updatedProduct = updatedProducts.find((p) => p._id.toString() === product._id.toString());
+      if (updatedProduct) {
+        // If product is found, update sendingQty and status
+        return {
+          ...product,
+          sendingQty: updatedProduct.sendingQty, // Update sendingQty
+          status: updatedProduct.status, // Update status
+        };
+      }
+      return product; // If no update found, return the product as is
+    });
+
+    await order.save(); // Save updated order to the database
+
+    res.status(200).json({
+      message: "Order updated successfully",
+      order: order, // Return the updated order
+    });
+  } catch (error) {
+    console.error("Error updating Order:", error);
+    res.status(500).json({ message: "Failed to update Order", error: error.message });
+  }
+});
+
+
+
+app.post("/orderplaceds", async (req, res) => {
+  console.log("Received order data:", req.body); // Debugging line to see what data is received
+
+  try {
+    const {
+      products,
+      totalAmount,
+      isStockOrder,
+      deliveryDate,
+      deliveryTime,
+      branch,
+    } = req.body; // Include branch in destructuring
+
+    // Generate a unique orderId based on the timestamp
+    const orderId = `ORD-${new Date().getTime()}`;
+
+    // Add the generated orderId and branches to each product
+    const updatedProducts = products.map((product) => {
+      return {
+        ...product,
+        orderId: orderId, // Assign the same orderId for all products in this order
+        branches: (product.branches || []).map((branch) => ({
+          ...branch,
+          name: branch.name || "No branch", // Default branch name if not provided
+        })),
+      };
+    });
+
+    console.log("Updated Products with orderId:", updatedProducts); // Debugging line
+
+    // Create a new order with the branch information
+    const newOrder = new OrderPlaced({
+      orderId: orderId, // Use the timestamp-based orderId for the whole order
+      products: updatedProducts,
+      totalAmount,
+      isStockOrder,
+      deliveryDate,
+      deliveryTime,
+      branch, // Add branch field for the order
+    });
+
+    // Save the order to the database
+    await newOrder.save(); 
+
+    console.log("Order saved successfully:", newOrder); // Debugging line to confirm that the order is saved
+
+    // Respond with success message
+    res.status(201).json({ message: "Order placed successfully" });
+  } catch (error) {
+    console.error("Error placing order:", error);
+    res.status(500).json({ error: "Failed to place order" });
+  }
+});
+
+
+app.get("/orderplaceds", async (req, res) => {
+  try {
+    const { orderDate, deliveryDate, branch, page = 1, pageSize = 10 } = req.query;
+    const filterQuery = {};
+
+    if (orderDate) {
+      const startOfOrderDate = new Date(orderDate);
+      const endOfOrderDate = new Date(startOfOrderDate);
+      endOfOrderDate.setHours(23, 59, 59, 999);
+
+      filterQuery.createdAt = { $gte: startOfOrderDate, $lte: endOfOrderDate };
+    }
+
+    if (deliveryDate) {
+      const startOfDeliveryDate = new Date(deliveryDate);
+      const endOfDeliveryDate = new Date(startOfDeliveryDate);
+      endOfDeliveryDate.setHours(23, 59, 59, 999);
+
+      filterQuery.deliveryDate = { $gte: startOfDeliveryDate, $lte: endOfDeliveryDate };
+    }
+
+    if (branch && branch !== "All") filterQuery.branch = branch;
+
+    const limit = parseInt(pageSize, 10);
+    const skip = (parseInt(page, 10) - 1) * limit;
+
+    console.log("MongoDB Filter Query:", filterQuery); // Log the filter query being used
+
+    const totalOrders = await OrderPlaced.countDocuments(filterQuery);
+    const orders = await OrderPlaced.find(filterQuery)
+      .sort({ createdAt: -1 }) // Sort by creation date
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    res.status(200).json({ orders, total: totalOrders });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
+});
+
+
+
+
+app.get("/orderplaceds/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    const order = await OrderPlaced.findById(orderId); // Fetch the order by orderId (MongoDB ObjectId)
+    if (order) {
+      res.json(order);
+    } else {
+      res.status(404).json({ error: "Order not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching order details:", error);
+    res.status(500).json({ error: "Failed to fetch order details" });
+  }
+});
+
+
+app.put("/orderplaceds/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+  const { products } = req.body;
+
+  try {
+    const order = await OrderPlaced.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Update products
+    products.forEach((updatedProduct) => {
+      const index = order.products.findIndex(
+        (product) => product.name === updatedProduct.name
+      );
+      if (index !== -1) {
+        // Update both sendingQty and status if available
+        order.products[index].sendingQty = updatedProduct.sendingQty;
+        order.products[index].status = updatedProduct.status;
+      }
+    });
+
+    await order.save();
+    res.status(200).json(order);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to update order" });
+  }
+});
+
 // Start the server
 const PORT = process.env.PORT || 3001;
 
 // Change 'localhost' to '0.0.0.0'
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on http://43.205.54.210:${PORT}`);
+  console.log(`Server running on http://64.227.145.104:${PORT}`);
 });

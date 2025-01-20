@@ -28,7 +28,7 @@ const BranchView = () => {
     const fetchBranches = async () => {
       setLoading(true);
       try {
-        const response = await axios.get("http://43.205.54.210:3001/stores");
+        const response = await axios.get("http://64.227.145.104:3001/stores");
         if (response.data) {
           setBranches(response.data);
         }
@@ -65,7 +65,7 @@ const BranchView = () => {
         }
 
         const response = await axios.get(
-          "http://43.205.54.210:3001/placeorders",
+          "http://64.227.145.104:3001/orderplaceds",
           {
             params: filters,
           }
@@ -88,6 +88,7 @@ const BranchView = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
+
       fetchOrders(); // Fetch orders at regular intervals
     }, 5000); // 5000ms (5 seconds)
 

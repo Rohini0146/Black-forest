@@ -48,7 +48,7 @@ const OrderHistory = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://43.205.54.210:3001/orders?limit=${limit}`
+        `http://64.227.145.104:3001/orders?limit=${limit}`
       );
 
       const data = response.data;
@@ -136,7 +136,7 @@ const OrderHistory = () => {
 
     try {
       await axios.put(
-        `http://43.205.54.210:3001/orders/${orderId}/response`,
+        `http://64.227.145.104:3001/orders/${orderId}/response`,
         { response: newResponse }
       );
       message.success(`Response for Order ${orderId} updated to: ${newResponse}`);

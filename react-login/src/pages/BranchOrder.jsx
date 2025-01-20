@@ -38,7 +38,7 @@ const BranchOrder = () => {
   const fetchCategories = async () => {
     try {
       const response = await axios.get(
-        "http://43.205.54.210:3001/productcategories"
+        "http://64.227.145.104:3001/productcategories"
       );
       setCategories(response.data);
     } catch (error) {
@@ -48,7 +48,7 @@ const BranchOrder = () => {
 
   const fetchProducts = async (savedFavourites) => {
     try {
-      const response = await axios.get("http://43.205.54.210:3001/pastries");
+      const response = await axios.get("http://64.227.145.104:3001/pastries");
       const productsWithQuantity = response.data.map((product) => ({
         ...product,
         quantity: 0,
@@ -62,7 +62,6 @@ const BranchOrder = () => {
       console.error("Failed to fetch products", error);
     }
   };
-  
 
   const calculateCategoryCounts = (products) => {
     const counts = {};
@@ -224,7 +223,7 @@ const BranchOrder = () => {
         : product
     );
     setProducts(updatedProducts);
-  
+
     const updatedFilteredProducts = updatedProducts.filter((product) =>
       selectedCategoryName
         ? product.category && product.category.name === selectedCategoryName
@@ -232,16 +231,15 @@ const BranchOrder = () => {
     );
     setFilteredProducts(updatedFilteredProducts);
   };
-  
 
   return (
-    <Layout className="layout">
-      <Content style={{ padding: "20px" }}>
+    <Layout className="layout" style={{height:"100%"}}>
+      <Content style={{ padding: "20px" , height:"100%"}}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <div className="create-order">
             <h2>Create an Order</h2>
           </div>
-          <div
+          {/* <div
             onClick={goToFavouritesPage}
             style={{
               cursor: "pointer",
@@ -249,7 +247,7 @@ const BranchOrder = () => {
             }}
           >
             <HeartFilled />
-          </div>
+          </div> */}
         </div>
         <Input
           className="search"
@@ -312,7 +310,7 @@ const BranchOrder = () => {
                     } // Disable only if inStockQuantity is undefined or null
                   />
 
-                  <div
+                  {/* <div
                     className="fav"
                     onClick={() => toggleFavourite(product)}
                     style={{
@@ -326,7 +324,7 @@ const BranchOrder = () => {
                     src={product.image}
                     alt={product.name}
                     style={{ width: "100%", height: "150px" }}
-                  />
+                  /> */}
                   <div className="product-information">
                     <div className="product-info">
                       <h3>{product.name}</h3>
