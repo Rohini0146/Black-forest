@@ -33,6 +33,11 @@ const Profile = () => {
     "branch-order",
     "branch-view",
     "product-view",
+    "product-categories",
+    "products",
+    "product-units",
+    "addon-product",
+    "album",
     "stock-order",
     "return-order",
     "payments",
@@ -51,7 +56,7 @@ const Profile = () => {
   const fetchStores = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://64.227.145.104:3001/stores");
+      const response = await axios.get("http://139.59.60.185:3001/stores");
       setStores(response.data);
     } catch (error) {
       console.error("Error fetching stores:", error);
@@ -71,7 +76,7 @@ const Profile = () => {
         : values.access;
       const userData = { ...values, access: userAccess };
       const response = await axios.post(
-        "http://64.227.145.104:3001/adduser",
+        "http://139.59.60.185:3001/adduser",
         userData
       );
 

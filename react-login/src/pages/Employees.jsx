@@ -21,11 +21,11 @@ const Employees = () => {
     const fetchEmployeesAndStores = async () => {
       try {
         // Fetch employees
-        const employeeResponse = await axios.get("http://64.227.145.104:3001/addusers");
+        const employeeResponse = await axios.get("http://139.59.60.185:3001/addusers");
         setEmployees(employeeResponse.data);
 
         // Fetch stores (for branches)
-        const storeResponse = await axios.get("http://64.227.145.104:3001/stores");
+        const storeResponse = await axios.get("http://139.59.60.185:3001/stores");
         setStores(storeResponse.data);
       } catch (error) {
         message.error("Error fetching employee or store data.");
@@ -80,7 +80,7 @@ const Employees = () => {
   // Force Logout function
   const handleForceLogout = (username) => {
     axios
-      .put("http://64.227.145.104:3001/addusers/forceLogout", { username })
+      .put("http://139.59.60.185:3001/addusers/forceLogout", { username })
       .then((response) => {
         message.success(`${username} has been forcefully logged out`);
 
@@ -106,7 +106,7 @@ const Employees = () => {
         setTimeout(() => {
           // Re-fetch employee data to update the status after forced logout
           axios
-            .get("http://64.227.145.104:3001/addusers")
+            .get("http://139.59.60.185:3001/addusers")
             .then((response) => {
               setEmployees(response.data);
             })

@@ -38,7 +38,7 @@ const BranchOrder = () => {
   const fetchCategories = async () => {
     try {
       const response = await axios.get(
-        "http://64.227.145.104:3001/productcategories"
+        "http://139.59.60.185:3001/productcategories"
       );
       setCategories(response.data);
     } catch (error) {
@@ -48,7 +48,7 @@ const BranchOrder = () => {
 
   const fetchProducts = async (savedFavourites) => {
     try {
-      const response = await axios.get("http://64.227.145.104:3001/pastries");
+      const response = await axios.get("http://139.59.60.185:3001/pastries");
       const productsWithQuantity = response.data.map((product) => ({
         ...product,
         quantity: 0,

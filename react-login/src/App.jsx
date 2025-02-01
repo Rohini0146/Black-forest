@@ -21,6 +21,12 @@ import Cart from './pages/Cart';
 import BranchView from './pages/BranchView';
 import ViewOrder from './pages/ViewOrder'; // Import the ViewOrder component
 import ProductView from './pages/ProductView';
+import AddonProducts from './pages/AddonProducts';
+import Albums from './pages/Albums';
+import ProductCategories from './pages/ProductCategories';
+import Products from './pages/Products';
+import ProductUnits from './pages/ProductUnits';
+
 
 const ProtectedRoute = ({ children }) => {
   const isLoggedIn = localStorage.getItem("username") && localStorage.getItem("role");
@@ -57,6 +63,11 @@ function App() {
             <Route path="edit-profile/:username" element={<EditProfile />} />
             <Route path='cart' element={<Cart/>} />
             <Route path='branch-view' element={<BranchView />} />
+            <Route path='addon-product' element={<AddonProducts />} />
+            <Route path="album" element={<Albums />} />
+            <Route path='product-categories' element={<ProductCategories />} /> 
+            <Route path='products' element={<Products />} />
+            <Route path='product-units' element={<ProductUnits />} />
             <Route
             path="view-order/:orderId"
             element={<ProtectedRoute><ViewOrder /></ProtectedRoute>}

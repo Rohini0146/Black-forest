@@ -12,7 +12,7 @@ const Order = () => {
     console.log("Form Data to Submit:", values); // Log form data
     setLoading(true);
     try {
-      const response = await axios.post("http://64.227.145.104:3001/order", values);
+      const response = await axios.post("http://139.59.60.185:3001/order", values);
       if (response.data) {
         message.success("Order successfully submitted!");
       }

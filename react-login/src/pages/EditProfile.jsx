@@ -32,7 +32,7 @@ const EditProfile = () => {
         }
 
         const response = await axios.get(
-          `http://64.227.145.104:3001/addusers/${username}`
+          `http://139.59.60.185:3001/addusers/${username}`
         );
         if (response.status === 200) {
           setUserDetails(response.data);
@@ -48,7 +48,7 @@ const EditProfile = () => {
     const fetchStores = async () => {
       setLoading(true);
       try {
-        const response = await axios.get("http://64.227.145.104:3001/stores");
+        const response = await axios.get("http://139.59.60.185:3001/stores");
         setStores(response.data);
       } catch (error) {
         console.error("Error fetching stores:", error);
@@ -70,6 +70,11 @@ const EditProfile = () => {
     "stock-order",
     "branch-view",
     "product-view",
+    "product-categories",
+    "product-units",
+    "products",
+    "addon-products",
+    "album",
     "return-order",
     "payments",
     "user-track",
@@ -92,7 +97,7 @@ const EditProfile = () => {
       ...newAccess.filter((item) => !userDetails.access.includes(item)),
     ];
     try {
-      await axios.put(`http://64.227.145.104:3001/addusers/${username}`, {
+      await axios.put(`http://139.59.60.185:3001/addusers/${username}`, {
         access: updatedAccess,
       });
       setUserDetails((prevDetails) => ({
@@ -112,7 +117,7 @@ const EditProfile = () => {
       (item) => item !== removedAccess
     );
     try {
-      await axios.put(`http://64.227.145.104:3001/addusers/${username}`, {
+      await axios.put(`http://139.59.60.185:3001/addusers/${username}`, {
         access: updatedAccess,
       });
       setUserDetails((prevDetails) => ({
@@ -147,7 +152,7 @@ const EditProfile = () => {
     try {
       // Send only the modified fields to the server
       await axios.put(
-        `http://64.227.145.104:3001/addusers/${username}`,
+        `http://139.59.60.185:3001/addusers/${username}`,
         updatedFields
       );
 

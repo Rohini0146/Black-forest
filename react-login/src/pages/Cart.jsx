@@ -45,7 +45,7 @@ const Cart = () => {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const response = await axios.get("http://64.227.145.104:3001/stores");
+        const response = await axios.get("http://139.59.60.185:3001/stores");
         if (response.data) {
           setBranches(response.data);
         }
@@ -121,7 +121,7 @@ const Cart = () => {
   
       console.log("Order Data:", orderData);
   
-      const response = await axios.post("http://64.227.145.104:3001/orderplaceds", {
+      const response = await axios.post("http://139.59.60.185:3001/orderplaceds", {
         products: orderData,
         totalAmount,
         isStockOrder,
@@ -156,7 +156,7 @@ const Cart = () => {
   //       inStockQuantity: item.inStockQuantity,
   //     }));
   
-  //     const response = await axios.post("http://64.227.145.104:3001/placeorders", {
+  //     const response = await axios.post("http://139.59.60.185:3001/placeorders", {
   //       products: orderData,
   //       totalAmount,
   //       isStockOrder,

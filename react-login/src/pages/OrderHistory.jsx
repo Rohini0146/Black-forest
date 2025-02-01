@@ -67,7 +67,7 @@ const OrderHistory = () => {
     e.preventDefault(); // Prevent page refresh when saving notes
   
     try {
-      const response = await axios.put(`http://64.227.145.104:3001/orders/${orderId}/notes`, {
+      const response = await axios.put(`http://139.59.60.185:3001/orders/${orderId}/notes`, {
         notes: notes[orderId], // Send the specific note for the order
       });
   
@@ -104,7 +104,7 @@ const OrderHistory = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://64.227.145.104:3001/orders?limit=${limit}`
+        `http://139.59.60.185:3001/orders?limit=${limit}`
       );
       const newOrders = response.data.orders;
       setOrders(newOrders);
@@ -124,7 +124,7 @@ const OrderHistory = () => {
 
   const fetchBranches = async () => {
     try {
-      const response = await axios.get("http://64.227.145.104:3001/stores");
+      const response = await axios.get("http://139.59.60.185:3001/stores");
       const branchesData = response.data;
       const branchesMap = {};
       branchesData.forEach((branch) => {
@@ -180,7 +180,7 @@ const OrderHistory = () => {
     try {
       const dateField =
         filterType === "deliveryDate" ? "delivery_date" : "created_at";
-      let url = `http://64.227.145.104:3001/orders?startDate=${startDate}&endDate=${endDate}&dateField=${dateField}`;
+      let url = `http://139.59.60.185:3001/orders?startDate=${startDate}&endDate=${endDate}&dateField=${dateField}`;
 
       if (responseType !== "Show All") {
         url += `&response=${responseType}`;
@@ -261,7 +261,7 @@ const OrderHistory = () => {
 
     try {
       // Update the response in the backend
-      await axios.put(`http://64.227.145.104:3001/orders/${orderId}/response`, {
+      await axios.put(`http://139.59.60.185:3001/orders/${orderId}/response`, {
         response: newResponse,
       });
       message.success(

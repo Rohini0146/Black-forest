@@ -84,6 +84,11 @@ const Dashboard = () => {
     if (path.includes("branch-view")) return "17";
     if (path.includes("view-order")) return "18";
     if (path.includes("product-view")) return "19";
+    if (path.includes("product-units")) return "20";
+    if (path.includes("product-categories")) return "21";
+    if (path.includes("addon-product")) return "22";
+    if (path.includes("album")) return "23";
+    if (path.includes("products")) return "24";
     return "1"; // Default to "1" for the dashboard
   };
 
@@ -108,6 +113,12 @@ const Dashboard = () => {
       17: "/dashboard/branch-view",
       18: "/dashboard/view-order",
       19: "/dashboard/product-view",
+      20: "/dashboard/product-units",
+      21: "/dashboard/product-categories",
+      22: "/dashboard/addon-product",
+      23: "/dashboard/album",
+      24: "/dashboard/products",
+
     };
     navigate(routes[key]);
   };
@@ -115,7 +126,7 @@ const Dashboard = () => {
   const handleLogout = () => {
     const username = localStorage.getItem("username");
     axios
-      .post("http://64.227.145.104:3001/logout", { username })
+      .post("http://139.59.60.185:3001/logout", { username })
       .then(() => {
         localStorage.clear();
         navigate("/login");
@@ -129,7 +140,7 @@ const Dashboard = () => {
   const fetchStores = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://64.227.145.104:3001/stores");
+      const response = await axios.get("http://139.59.60.185:3001/stores");
       setStores(response.data);
       setFilteredStores(response.data);
     } catch (error) {
@@ -215,6 +226,35 @@ const Dashboard = () => {
               Employees
             </Menu.Item>
           )}
+          {(isSuperAdmin || accessList.includes("product-units")) && (
+            <Menu.Item key="20" icon={<SolutionOutlined />}>
+              Product Units
+            </Menu.Item>
+          )}
+          {(isSuperAdmin || accessList.includes("product-categories")) && (
+            <Menu.Item key="21" icon={<SolutionOutlined />}>
+              Product Categories
+            </Menu.Item>
+          )}
+
+          {(isSuperAdmin || accessList.includes("addon-product")) && (
+            <Menu.Item key="22" icon={<SolutionOutlined />}>
+              Addon Product
+            </Menu.Item>
+          )}
+
+          {(isSuperAdmin || accessList.includes("album")) && (
+            <Menu.Item key="23" icon={<SolutionOutlined />}>
+              Album
+            </Menu.Item>
+          )}
+
+          {(isSuperAdmin || accessList.includes("products")) && (
+            <Menu.Item key="24" icon={<SolutionOutlined />}>
+              Products
+            </Menu.Item>
+          )}
+
           {(isSuperAdmin || accessList.includes("branch-view")) && (
             <Menu.Item key="17" icon={<DatabaseOutlined />}>
               Branch View

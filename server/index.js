@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(cors());
 app.use(
   cors({
-    origin: ["http://64.227.145.104", "http://yourdomain.com"],
+    origin: ["http://139.59.60.185", "http://yourdomain.com"],
   })
 );
 
@@ -786,10 +786,13 @@ app.put("/orderplaceds/:orderId", async (req, res) => {
   }
 });
 
+
+
+
 // Start the server
 const PORT = process.env.PORT || 3001;
 
 // Change 'localhost' to '0.0.0.0'
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on http://64.227.145.104:${PORT}`);
+  console.log(`Server running on http://139.59.60.185:${PORT}`);
 });

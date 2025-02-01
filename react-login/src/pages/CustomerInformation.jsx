@@ -24,7 +24,7 @@ const CustomerInformation = () => {
 
   const fetchBranches = async () => {
     try {
-      const response = await axios.get("http://64.227.145.104:3001/stores");
+      const response = await axios.get("http://139.59.60.185:3001/stores");
       const branchesData = response.data;
       const branchesMap = {};
       branchesData.forEach((branch) => {
@@ -41,7 +41,7 @@ const CustomerInformation = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://64.227.145.104:3001/orders?limit=${limit}`
+        `http://139.59.60.185:3001/orders?limit=${limit}`
       );
       const { orders } = response.data;
       setCustomers(orders);
@@ -142,7 +142,7 @@ const CustomerInformation = () => {
     try {
       const dateField =
         filterType === "deliveryDate" ? "delivery_date" : "created_at";
-      let url = `http://64.227.145.104:3001/orders?startDate=${startDate}&endDate=${endDate}&dateField=${dateField}`;
+      let url = `http://139.59.60.185:3001/orders?startDate=${startDate}&endDate=${endDate}&dateField=${dateField}`;
 
       if (responseType !== "Show All") {
         url += `&response=${responseType}`;
@@ -175,7 +175,7 @@ const CustomerInformation = () => {
   const handleMenuClick = async (e, orderId) => {
     const newResponse = e.key;
     try {
-      await axios.put(`http://64.227.145.104:3001/orders/${orderId}/response`, {
+      await axios.put(`http://139.59.60.185:3001/orders/${orderId}/response`, {
         response: newResponse,
       });
       message.success(`Response for Order ${orderId} updated to: ${newResponse}`);
